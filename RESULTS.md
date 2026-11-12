@@ -25,4 +25,6 @@ Marvin a vérifié le rouleau, le passage du papier et le capot. Un contrôle co
 repères tous les 40, puis avance de 80 pas. L'entraînement réel doit être confirmé
 avant de reprendre les deux longues bandes.
 
-Les résultats suivants seront ajoutés après cette vérification.
+Le contrôle court s’est terminé avec `flags=0x00` et le code de sortie 0.
+Marvin confirme ensuite que le papier avance et que la mire est régulière.
+Le test de faible énergie est relancé après cette confirmation.
