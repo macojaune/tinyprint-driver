@@ -113,7 +113,8 @@ class Monitor:
 async def run(args, rows, settings, log):
     client = None
     summary = {"scenario": args.scenario, "settings": settings,
-               "outcome": "not_started", "rows_sent": 0, "strips_completed": 0}
+               "outcome": "not_started", "rows_sent": 0, "strips_completed": 0,
+               "physical_paper_review": "pending; BLE writes do not prove paper motion"}
     monitor = None
     try:
         client, tx = await driver.connect(SimpleNamespace(address=args.address, timeout=12))
@@ -148,6 +149,8 @@ async def run(args, rows, settings, log):
         summary["outcome"] = "completed_no_fault"
     except driver.FaultDetected as exc:
         summary["outcome"] = "fault_0x04" if exc.state["flags"] & 4 else "other_state_error"
+    except asyncio.CancelledError:
+        summary["outcome"] = "cancelled"
     except Exception as exc:
         summary["outcome"] = "inconclusive"
         summary["error"] = f"{type(exc).__name__}: {exc}"

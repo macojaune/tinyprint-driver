@@ -1,8 +1,11 @@
 """Harness checks only. These tests do not reproduce the hardware fault."""
 import unittest
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import tinyprint_cli as driver
-from experiment import Monitor
+from experiment import Monitor, run
 
 
 class FakeClient:
@@ -54,6 +57,22 @@ class ExperimentTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(driver.FaultDetected):
             await monitor.write_gatt_char(None, driver.make_packet(0xA2, bytes(48)))
         self.assertEqual(client.writes, [])
+
+    async def test_cancelling_readiness_wait_sends_no_raster(self):
+        client = FakeClient()
+        client.is_connected = True
+        client.disconnect = AsyncMock()
+        args = SimpleNamespace(address="fake", scenario="baseline", settle=60, ready_timeout=1200)
+        events = []
+        with patch("experiment.driver.connect", AsyncMock(return_value=(client, "tx"))), \
+                patch.object(Monitor, "subscribe", AsyncMock()), \
+                patch.object(Monitor, "rest_until_ready", AsyncMock(side_effect=asyncio.CancelledError)):
+            result = await run(args, [[bytes(48)], [bytes(48)]],
+                               {"pause_seconds": 0}, lambda event, **kw: events.append(event))
+        self.assertEqual(result["outcome"], "cancelled")
+        self.assertEqual(client.writes, [])
+        client.disconnect.assert_awaited_once()
+        self.assertEqual(events[-1], "result")
 
 
 if __name__ == "__main__":
