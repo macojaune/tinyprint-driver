@@ -46,6 +46,15 @@ class ExperimentTest(unittest.IsolatedAsyncioTestCase):
         monitor.notify(None, packet)
         self.assertIsNone(monitor.latest)
 
+    async def test_paper_sensor_error_is_not_classified_as_thermal_fault(self):
+        client = FakeClient()
+        monitor = Monitor(client, None, lambda *a, **kw: None)
+        monitor.notify(None, driver.make_packet(0xA3, bytes([1, 27, 40])))
+        self.assertEqual(monitor.fault["state"]["flags"], 1)
+        with self.assertRaises(driver.FaultDetected):
+            await monitor.write_gatt_char(None, driver.make_packet(0xA2, bytes(48)))
+        self.assertEqual(client.writes, [])
+
 
 if __name__ == "__main__":
     unittest.main()

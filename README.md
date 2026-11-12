@@ -1,6 +1,6 @@
 # Tiny Print driver
 
-Pilote expérimental Python pour une mini imprimante BLE Tiny Print X5.
+Pilote expérimental Python 3.10+ (essayé sous Python 3.13) pour une mini imprimante BLE Tiny Print X5.
 Développement et mesures sur macOS ; compatibilité des autres modèles non vérifiée.
 
 Le pilote est repris du travail local `tools/tinyprint_cli.py` de cette session,

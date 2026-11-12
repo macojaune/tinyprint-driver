@@ -29,7 +29,7 @@ pas cette reproduction matérielle.
 - Télémétrie A3 toutes les 100 lignes, sans attendre les réponses pendant le raster.
   Cette instrumentation ajoute des commandes BLE. Elle diffère des anciens essais
   qui lisaient l'état seulement aux pauses et en fin de bande.
-- Arrêt au premier `0x04` reçu, ou résultat inconclusif en cas d'erreur de connexion
+- Arrêt au premier bit d’erreur du masque `0x0F` reçu (`0x04` distingué des autres), ou résultat inconclusif en cas d'erreur de connexion
   ou d'absence d'état frais aux points de contrôle obligatoires.
 - Les compteurs désignent des lignes envoyées, pas une longueur imprimée mesurée.
 - Après une mise en défaut, le banc attend le retour à `0x00` et 60 s stables avant
@@ -59,3 +59,16 @@ python experiment.py single-pause private/01.png private/02.png --address UUID -
 Les journaux bruts et les résultats JSON restent dans `runs/`, ignoré par Git.
 Le bilan anonymisé est versionné après les essais. Une réussite sur une seule paire
 ne garantit pas une limite universelle ; une répétition est nécessaire.
+
+## Capteur papier
+
+Un premier essai interrompu par un blocage papier signalé par Marvin a reçu
+`0x01`, avec octet 2 à 26–27. Ce résultat est exclu des reproductions de `0x04`.
+La documentation de la famille associe `0x01` au capteur papier/porte ouverte,
+`0x02` au capot, `0x04` à une tête chaude et `0x08` à une batterie faible :
+https://github.com/bitbank2/Thermal_Printer/wiki/Cat-Rabbit-printer-info
+
+Cette attribution est une source externe de rétro-ingénierie. La correspondance
+`0x01`/incident papier concorde avec l’observation humaine sur notre exemplaire ;
+la cause physique du `0x04` doit encore être testée. Les octets 2 et 3 ne sont
+pas identifiés par cette source et restent bruts dans nos mesures.

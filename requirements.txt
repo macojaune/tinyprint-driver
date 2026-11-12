@@ -1,2 +1,2 @@
-bleak>=1.0,<3
-Pillow>=11,<13
+bleak==3.0.2
+Pillow==12.3.0

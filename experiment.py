@@ -56,7 +56,7 @@ class Monitor:
         if state and valid:
             self.latest = state
             self.sequence += 1
-            if state["flags"] & 4 and self.fault is None:
+            if state["flags"] & 0x0F and self.fault is None:
                 self.fault = {"rows_sent": self.rows, "strip": self.strip,
                               "strip_rows_sent": self.strip_rows, "state": state}
 
@@ -146,8 +146,8 @@ async def run(args, rows, settings, log):
         if state["flags"] != 0:
             raise StateUnavailable("Nonzero final flags")
         summary["outcome"] = "completed_no_fault"
-    except driver.FaultDetected:
-        summary["outcome"] = "fault_0x04"
+    except driver.FaultDetected as exc:
+        summary["outcome"] = "fault_0x04" if exc.state["flags"] & 4 else "other_state_error"
     except Exception as exc:
         summary["outcome"] = "inconclusive"
         summary["error"] = f"{type(exc).__name__}: {exc}"
