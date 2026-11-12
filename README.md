@@ -19,9 +19,13 @@ Le bit d’état `0x04` est associé à un arrêt d’impression constaté. Sa c
 signification des autres octets sont en cours d’investigation. Les noms internes
 `overheat` et `temp` sont historiques, pas des diagnostics matériels confirmés.
 
-Les fonctions de découpe et d’assemblage sont encore dans le prototype. Leur
-séparation du transport/protocole est prévue avant une publication éventuelle.
+`protocol.py` contient le codec et les commandes, sans dépendance à BLE ou aux images.
+`tinyprint_cli.py` contient le transport et les fonctions de découpe du prototype.
+Leur séparation complète reste prévue avant une publication éventuelle.
 Les photos personnelles et journaux bruts restent ignorés dans `private/` et `runs/`.
+
+Le banc de tests matériels et les hypothèses sont décrits dans `EXPERIMENTS.md`.
+`python -m unittest -v` vérifie le codec et le banc sans accéder à l'imprimante.
 
 ## Provenance et publication
 
