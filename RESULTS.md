@@ -49,6 +49,56 @@ effective devient insuffisante sous cette charge ; la mesure de la longueur tota
 et la distinction entre mécanisme d’entraînement, alimentation et exécution firmware
 restent ouvertes. Cette expérience ne mesure ni chauffe, ni tension, ni courant.
 
+### Même mire sombre, pauses internes 400 lignes / 6 secondes
+
+Le tirage commence après 60 secondes continues d’état A3 clair. Le raster et
+l’énergie 8000 restent identiques, avec un délai de 14 ms et cinq pauses de six
+secondes, exactement après 400, 800, 1200, 1600 et 2000 lignes. Les états aux pauses
+sont clairs. Le premier `0x04` enregistré arrive après l’envoi des 2304 lignes,
+environ 67,9 s après le début du raster. La trame reçue est valide au CRC :
+`51 78 a3 01 03 00 04 0c 28 8f ff`. Aucun XOFF n’est reçu pendant cet essai.
+
+Marvin mesure environ **13 cm entre 0 et 280 mm**, au lieu de 28 cm. Les graduations
+commencent encore à se tasser vers 20–25 mm, avant la première pause prévue à 50 mm
+théoriques. Ces pauses ne corrigent donc ni le défaut final ni la géométrie sur
+cette mire. Elles ne sont pas un profil validé pour les photos très sombres.
+
+### Mode de dessin : essai isolé sans correction de la géométrie
+
+Le pilote hérite de TinyPOS une commande `BE 01` nommée `CMD_APPLY_ENERGY`.
+La [documentation de cette famille](https://github.com/bitbank2/Thermal_Printer/wiki/Cat-Rabbit-printer-info)
+et le [code primaire de Thermal_Printer](https://github.com/bitbank2/Thermal_Printer/blob/master/src/Thermal_Printer.cpp)
+l’identifient comme un mode de dessin, 1 pour le texte et 0 pour les images.
+Un essai isolé avec `BE 00` utilise les 800 premières lignes de la même mire sombre,
+soit 10 cm théoriques, à énergie 8000, délai 14 ms et sans pause. Il commence après
+60 secondes continues d’état clair. Aucun défaut n’est enregistré pendant l’envoi
+ou les 60 secondes d’observation qui suivent. Marvin confirme toutefois que les
+graduations se tassent encore après 20–25 mm.
+
+Ce changement de mode seul ne résout donc pas la géométrie. La réussite du contrôle
+A3 sur ce tirage court ne valide ni sa longueur physique ni une longue bande.
+Le pilote normal conserve son mode hérité ; aucune correction du mode n’est livrée
+sur la base de cet essai.
+
+### Mire sombre courte à énergie 6000
+
+Les mêmes 800 premières lignes sont ensuite envoyées à énergie **6000**, en
+revenant au mode hérité `BE 01`, avec délai 14 ms et sans pause. Le départ suit
+60 secondes continues d’état clair. Aucun défaut n’apparaît pendant l’envoi ni
+durant les 60 secondes d’observation suivantes. Marvin confirme **8 cm entre les
+repères 0 et 80 mm**, réguliers et plutôt lisibles. L’alimentation reste le même
+port USB du Mac.
+
+La baisse d’énergie rétablit donc la géométrie sur cette mire sombre courte. Cela
+ne distingue pas un effet thermique, électrique ou une adaptation du firmware ;
+ces mécanismes ne sont pas mesurés.
+
+La mire sombre complète de 2304 lignes est ensuite envoyée à 6000 avec les mêmes
+paramètres, après 60 secondes continues d’état clair. L’envoi et les 60 secondes
+de surveillance suivantes se terminent sans défaut, état final `00 0c 29`. La
+mesure physique des repères 0–280 mm est encore attendue. La géométrie de cette
+mire longue et le rendu sur la photo ne sont donc pas encore validés.
+
 ## Incident papier à exclure des mesures de limite
 
 Papier rose, imprimante branchée en USB selon Marvin. Un premier essai a rencontré
