@@ -53,7 +53,8 @@ class BridgeRuntime:
 
     def render(self, content, direction, count, dither, gain, energy, row_delay, cooldown,
                *, preview=False, size_mode='count', size_mm=None, preset='custom',
-               sharpness=None, contrast=None, brightness=None, strength=7, autocrop=False):
+               sharpness=None, contrast=None, brightness=None, strength=7, autocrop=False,
+               chunk_rows=0, chunk_pause=6):
         options=resolve_render(dict(preset=preset,dither=dither,gain=gain,sharpness=sharpness,
                                     contrast=contrast,brightness=brightness,strength=strength,autocrop=autocrop))
         with Image.open(io.BytesIO(content)) as source:
@@ -65,7 +66,8 @@ class BridgeRuntime:
             sheet=preview_image(source,plan,options)
             bands=[dict(number=i,rows=plan['rows_per_ticket'],length_mm=plan['rows_per_ticket']/8)
                    for i in range(1,plan['count']+1)]
-            settings=dict(energy=energy,row_delay=row_delay,cooldown=cooldown)
+            settings=dict(energy=energy,row_delay=row_delay,cooldown=cooldown,
+                          chunk_rows=chunk_rows,chunk_pause=chunk_pause)
             if preview:
                 buffer=io.BytesIO();sheet.save(buffer,format='PNG')
                 return dict(count=plan['count'],size_mm=plan['size_mm'],bands=bands,layout=plan,
@@ -88,10 +90,11 @@ class BridgeRuntime:
         return self.render(*args, **kwargs)
 
     def args(self, settings=None, strength=3, resume=False):
-        settings = settings or dict(energy=8000, row_delay=.014, cooldown=0)
+        settings = dict(dict(energy=8000, row_delay=.014, cooldown=0, chunk_rows=0,
+                             chunk_pause=6), **(settings or {}))
         return SimpleNamespace(address=self.address, timeout=12, strength=strength, **settings,
                                feed_rows=80, feed_mm=10, force=False, fault_wait=0,
-                               chunk_rows=0, chunk_pause=0, smart_pause=True, smart_window=48,
+                               smart_pause=False, smart_window=48,
                                cool_max=0, resume=resume)
 
     async def transmit(self, call):
@@ -235,7 +238,8 @@ def build_app(tinypos_path, data_dir, address=None):
                       cooldown: float = Form(0, ge=0, le=120), size_mode: str = Form('count'), size_mm: float = Form(None),
                       preset: str = Form('custom'), sharpness: float = Form(None, ge=0, le=3),
                       contrast: float = Form(None, ge=.25, le=3), brightness: float = Form(None, ge=.25, le=3),
-                      strength: int = Form(7, ge=1, le=7), autocrop: bool = Form(False)):
+                      strength: int = Form(7, ge=1, le=7), autocrop: bool = Form(False),
+                      chunk_rows: int = Form(0, ge=0, le=12000), chunk_pause: float = Form(6, ge=0, le=120)):
         content=await file.read(20*1024*1024+1)
         if len(content)>20*1024*1024:
             raise HTTPException(413,'Photo limitée à 20 Mo.')
@@ -243,7 +247,8 @@ def build_app(tinypos_path, data_dir, address=None):
             async with runtime.render_lock:
                 return await asyncio.to_thread(runtime.render,content,direction,count,dither,gain,energy,row_delay,cooldown,
                     preview=request.url.path.endswith('/preview'),size_mode=size_mode,size_mm=size_mm,preset=preset,
-                    sharpness=sharpness,contrast=contrast,brightness=brightness,strength=strength,autocrop=autocrop)
+                    sharpness=sharpness,contrast=contrast,brightness=brightness,strength=strength,autocrop=autocrop,
+                    chunk_rows=chunk_rows,chunk_pause=chunk_pause)
         except (UnidentifiedImageError,OSError,ValueError,Image.DecompressionBombError) as exc:
             raise HTTPException(422,str(exc) if isinstance(exc,ValueError) else 'Image illisible ou trop grande.')
     @router.get('/api/internal/bands/{identifier}')
