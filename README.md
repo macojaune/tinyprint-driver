@@ -94,8 +94,8 @@ python tinyprint_cli.py status --address ADRESSE_DU_SCAN
 Remplacer `ADRESSE_DU_SCAN` par l’adresse renvoyée sur son propre ordinateur.
 Sur macOS, la valeur observée est un UUID CoreBluetooth ; elle n’est pas une
 référence commerciale à recopier depuis un autre Mac. Vérifier le nom annoncé à
-la connexion. Le prototype peut retomber sur le premier candidat détecté si une
-adresse demandée n’est pas retrouvée : la sélection stricte reste à améliorer.
+la connexion. Une adresse explicite introuvable arrête la connexion ; aucun autre candidat
+n’est sélectionné à sa place.
 
 `scan`, `info` et `status` n’envoient pas de raster et ne font pas avancer le papier.
 `status` renvoie actuellement 0 si le bit 0x04 est absent, 3 s’il est actif et 1 si
@@ -240,9 +240,9 @@ absent. Les scénarios à deux photos nécessitent les deux bitmaps monochromes 
 `python calibration.py` crée deux mires synthétiques dans `private/calibration/`,
 sans connexion ni impression.
 
-Le projet ne contient actuellement ni serveur HTTP, ni interface graphique,
-ni file de jobs persistante. Le clone TinyPOS-Bridge utilisé au début est un projet
-séparé ; son serveur et ses accès locaux ne font pas partie de ce dépôt.
+Une extension web locale est disponible : voir [WEB_BRIDGE.md](WEB_BRIDGE.md).
+Elle ajoute l’atelier photo à l’interface du clone TinyPOS-Bridge, qui reste un projet
+séparé. Son code et ses accès locaux ne sont pas recopiés dans ce dépôt.
 Les fonctions spécifiques d’assemblage sont encore dans le CLI ; leur séparation
 complète du pilote générique reste une étape de préparation à la publication.
 
