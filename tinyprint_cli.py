@@ -56,9 +56,7 @@ def looks_like_printer(name, svc):
 
 async def find(timeout=12.0, address=None):
     if address:
-        d = await BleakScanner.find_device_by_address(address, timeout=timeout)
-        if d:
-            return d
+        return await BleakScanner.find_device_by_address(address, timeout=timeout)
     found, seen = [], set()
     def cb(dev, adv):
         svc = [str(u).lower() for u in (adv.service_uuids or [])]

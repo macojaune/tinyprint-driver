@@ -31,7 +31,7 @@ autorisée, prépare et vérifie le code sans envoyer de raster ni avancer le pa
 1. Vérifie le répertoire, les consignes applicables, `git status --short --branch`,
    les remotes et les travaux existants. Préserve les modifications sans rapport.
 2. Lis `README.md` pour l’installation, les commandes et l’identité du matériel de
-   référence. Si tu touches au débit, à l’énergie, aux pauses, à la géométrie ou au
+   référence. Pour l’interface ou l’intégration TinyPOS, lis aussi `WEB_BRIDGE.md`. Si tu touches au débit, à l’énergie, aux pauses, à la géométrie ou au
    support matériel, lis aussi `EXPERIMENTS.md` et `RESULTS.md`.
 3. Inspecte le code au point d’entrée concerné et `--help`. Le contenu des documents
    décrit des observations datées ; vérifie l’état réel avant de t’y fier.
@@ -97,9 +97,9 @@ composants, et vérifie les exemples ou exports modifiés.
 
 Pour une validation matérielle autorisée :
 
-1. Vérifie que le bon appareil est sélectionné et que le rouleau est prêt. Le prototype
-   peut retomber sur un autre candidat si l’adresse explicite est introuvable ;
-   corrige ou borne ce comportement avant une utilisation sur plusieurs appareils.
+1. Vérifie que le bon appareil est sélectionné et que le rouleau est prêt. Le pilote
+   doit s’arrêter si l’adresse explicite est introuvable, comme le vérifie le test
+   de sélection de cible.
 2. Commence par une petite mire si l’appareil, le papier ou la géométrie a changé.
    Compare les repères imprimés à leur échelle attendue et confirme l’avance réelle.
 3. Exécute le parcours demandé avec des paramètres et une entrée identifiés. Le banc

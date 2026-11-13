@@ -76,3 +76,12 @@ class DriverTest(unittest.IsolatedAsyncioTestCase):
         fake = FakePrinter()
         self.assertEqual(await self.print_fake(fake, energy=8000, row_delay=0), 0)
         self.assertEqual(fake.energies, [8000])
+
+
+class TargetTest(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_explicit_target_does_not_scan_for_another_printer(self):
+        with patch.object(driver, "BleakScanner") as scanner:
+            scanner.find_device_by_address = AsyncMock(return_value=None)
+            self.assertIsNone(await driver.find(address="requested-only"))
+            scanner.assert_not_called()
+            scanner.find_device_by_address.assert_awaited_once()
