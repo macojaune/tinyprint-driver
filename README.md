@@ -46,7 +46,9 @@ entre lignes en secondes. Le seuil de rendu reste celui de `--strength`.
 python tinyprint_cli.py image image.png --energy 8000 --row-delay 0.014 --chunk-rows 0 --address UUID
 ```
 
-Ce sont des paramètres expérimentaux, pas encore un profil de qualité validé.
+Le réglage énergie 8000 / délai 14 ms sans pauses fixes a passé deux essais de
+deux bandes sur notre exemplaire X5, avec contrôle visuel de Marvin. Ce résultat
+ne garantit pas les autres papiers, modèles ou séries plus longues.
 Le contrôle de débit `AE 10`/`AE 00` reste actif même si `--chunk-rows 0` désactive
 les pauses fixes. Une fin d'envoi et un état `0x00` ne prouvent pas la bonne géométrie
 sur papier ; le bilan matériel est dans `RESULTS.md`.

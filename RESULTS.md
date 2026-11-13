@@ -95,8 +95,55 @@ est lancée avant de tester une cadence plus lente à 14500.
 Deuxième essai identique : 3453 lignes, aucune demande XOFF, aucun `0x04`, état
 final `00 0c 29` après 60 s de surveillance supplémentaire. Les deux essais ont
 chacun commencé après 60 s continues d’état `0x00`. Cela représente deux paires
-séparées, pas quatre bandes imprimées d’un seul flux continu. La confirmation
-visuelle du deuxième essai reste à recueillir.
+séparées, pas quatre bandes imprimées d’un seul flux continu. Marvin confirme
+également deux bandes lisibles à la bonne taille et sans défaut d’avance sur cette répétition.
 
 Le scénario à énergie 14500 et délai 28 ms est ensuite lancé, toujours sans pause
 fixe et avec le contrôle de débit actif.
+
+## Énergie 14500 avec délai doublé à 28 ms
+
+Même paire de photos, même énergie, contrôle de débit actif. Aucune demande XOFF.
+Premier `0x04` à 1728 lignes envoyées, au contrôle de fin de la première trame,
+51,520 s après le début du premier job. La deuxième bande n’est pas envoyée.
+Le défaut est donc reproduit sans saturation signalée de la réception BLE.
+La géométrie physique de ce dernier tirage n’a pas été confirmée.
+
+## Bilan et réglage retenu pour ces essais
+
+| Entrée | Énergie AF | Délai/ligne | Résultat matériel et logiciel |
+| --- | ---: | ---: | --- |
+| Deux photos | 4000 | 14 ms | 3453 lignes sans défaut, mais image trop pâle pour valider la géométrie |
+| Deux photos, deux essais séparés | 8000 | 14 ms | 2 × 3453 lignes sans défaut ; les deux paires confirmées lisibles et aux bonnes proportions par Marvin |
+| Deux photos | 14500 | 14 ms | 0x04 après 2539 lignes envoyées et 49,093 s ; 8,534 s d’attente XOFF/XON respectée ; compression visible sur papier |
+| Deux photos | 14500 | 28 ms | 0x04 après 1728 lignes envoyées et 51,520 s ; aucune demande XOFF |
+| Mires A et B courtes | 14500 | 14 ms | 800 lignes sans défaut ; dimensions de 4 cm confirmées sur les deux repères 0–40 |
+
+Les deux essais à 8000 réussissent sans pauses fixes à l’intérieur des bandes ou
+entre elles, avec une minute d’état clair avant chaque paire et une minute
+supplémentaire d’observation après. Ce ne sont pas quatre bandes en flux continu.
+Le contrôle de débit AE reste obligatoire ; le prototype précédent l’ignorait.
+Il est maintenant partagé entre le banc et les commandes d’impression courantes.
+
+La dépendance à l’énergie et à la durée du tirage est observée. La protection
+thermique est une hypothèse cohérente avec la documentation de la famille
+(`0x04` = tête chaude), mais nous ne mesurons ni température ni courant et ne
+prouvons pas le mécanisme physique exact. La valeur maximale utilisable, les
+séries plus longues, les autres papiers et l’autonomie sur batterie restent à tester.
+
+Réglage retenu sur ce papier pour ces deux photos : énergie 8000, délai 0,014 s,
+pas de pauses fixes, contrôle de débit actif. Ne pas utiliser le seul `--strength 1`
+pour le reproduire : il choisit un autre délai par défaut.
+
+```sh
+.venv/bin/python experiment.py mid-energy private/01.png private/02.png --address UUID --execute
+```
+
+Pour `tile-send`, utiliser `--energy 8000 --row-delay 0.014 --chunk-rows 0
+--cooldown 0 --feed-rows 80`. L’avance de 80 pas et le surcoût des fins/débuts de
+jobs font partie du protocole d’essai, même en l’absence de pause volontaire.
+
+Les fichiers sources et ce bilan sont commités localement dans `develop`. Aucun
+remote GitHub ni aucune publication n’ont été créés. Les images et traces brutes
+restent dans les dossiers ignorés. À la fin des essais, l’imprimante est en défaut
+`0x04` après le scénario à 14500/28 ms ; aucun tirage automatique ne reste en attente.
