@@ -82,7 +82,8 @@ class ApiTest(unittest.TestCase):
             series = self.prepare()
             self.assertEqual(series['count'], 2)
             self.assertEqual(series['size_mm'], [96,60])
-            self.assertEqual(series['settings']['energy'],8000)
+            self.assertEqual(series['settings']['energy'],6000)
+            self.assertEqual(self.app.state.bands.args().energy,6000)
             prefix = '/api/internal/bands/'+series['id']
             self.assertEqual(self.client.get(prefix+'/preview').headers['content-type'],'image/png')
             self.assertEqual(self.client.get(prefix+'/download').content[:2],b'PK')
@@ -90,6 +91,7 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(page.status_code,200)
             self.assertIn('Atelier photo en bandes',page.text)
             self.assertIn('navbar',page.text)
+            self.assertRegex(page.text,r'id="energy"[^>]+value="6000"')
             self.assertNotIn('Bainiu / X6',page.text)
             self.assertIn("data.printer_name || 'Imprimante BLE'",page.text)
 
@@ -146,7 +148,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(data['layout']['trim_mm'],40)
         self.assertEqual(data['render']['sharpness'],2)
         self.assertEqual(data['render']['contrast'],1.4)
-        self.assertEqual(data['settings']['energy'],8000)
+        self.assertEqual(data['settings']['energy'],6000)
         self.assertTrue((self.app.state.bands.folder(data['id'])/'05.png').exists())
 
     def test_thermal_settings_do_not_simulate_a_different_image(self):
@@ -175,6 +177,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(args.chunk_pause,6)
         self.assertFalse(args.smart_pause)
         old=self.app.state.bands.args({'energy':8000,'row_delay':.014,'cooldown':0})
+        self.assertEqual(old.energy,8000)
         self.assertEqual(old.chunk_rows,0)
         self.assertEqual(old.chunk_pause,6)
         self.assertEqual(self.client.get('/api/internal/bands/'+series['id']).json()['settings']['chunk_rows'],400)
@@ -184,7 +187,7 @@ class ApiTest(unittest.TestCase):
         self.login()
         series = self.prepare()
         async def fake_send(args, images, folder):
-            self.assertEqual(args.energy,8000)
+            self.assertEqual(args.energy,6000)
             self.assertEqual(args.row_delay,.014)
             self.assertEqual(len(images),2)
             driver.save_state(folder,dict(done=[1,2],failed=None))

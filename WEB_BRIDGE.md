@@ -90,7 +90,10 @@ de tramage à cette échelle ne reproduit pas chaque point du PNG final. Les PNG
 ZIP donnent le raster réellement envoyé, sans guides bleus de découpe.
 
 L’énergie, le délai par ligne et la pause entre tickets sont séparés, dans les
-réglages d’impression repliés. Ils démarrent à **8000 / 14 ms / aucune pause fixe**.
+réglages d’impression repliés. Ils démarrent à **6000 / 14 ms / aucune pause fixe**.
+Ces valeurs de départ sont partagées avec les impressions classiques du bridge. Les valeurs
+explicites des séries déjà préparées restent conservées : une série à 8000 reste
+à 8000 tant que l’utilisateur ne prépare pas une nouvelle série avec un autre réglage.
 Deux champs permettent aussi de tester une pause à l’intérieur d’un ticket : le
 nombre de lignes entre pauses et leur durée. Le nombre de lignes démarre à **0**,
 donc ces pauses restent désactivées par défaut. Par exemple, 400 lignes / 6 secondes
@@ -113,7 +116,7 @@ comportement propre ; la nouvelle échelle de compensation concerne cet atelier.
 - L’impression appelle `print_series` et son état `state.json`, avec le même
   `transport.py` et le contrôle de débit AE.
 - Les impressions classiques TinyPOS sont redirigées vers `print_image` du même
-  pilote, avec énergie 8000 et délai 14 ms. Le niveau de rendu de TinyPOS reste
+  pilote, avec énergie 6000 et délai 14 ms. Le niveau de rendu de TinyPOS reste
   transmis ; sa sélection de force ne choisit plus seule l’énergie matérielle.
 - Un verrou partagé sérialise les séries, les impressions classiques et l’avance
   papier du processus serveur. Le bouton d’arrêt classique atteint l’envoi actif.
@@ -174,5 +177,6 @@ Le parcours navigateur a été vérifié sur image synthétique : sélection et 
 aperçu automatique, changement de préréglage, 21 tickets, largeur de 20 cm, ZIP et
 restauration par URL, sur bureau et à 390 px. Le ZIP a été relu pour vérifier ses
 dimensions et la marge blanche. L’impression web réelle reste à valider avec le
-propriétaire et le papier prêt. Le profil 8000/14 ms vient des essais physiques
-antérieurs du CLI décrits dans `RESULTS.md`.
+propriétaire et le papier prêt. Le profil 6000/14 ms vient des mires denses décrites
+dans `RESULTS.md`. Le précédent profil à 8000 avait passé deux paires de photos,
+mais a échoué sur le nouveau contenu très sombre.
