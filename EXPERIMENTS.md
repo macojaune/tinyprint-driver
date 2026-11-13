@@ -72,3 +72,22 @@ Cette attribution est une source externe de rétro-ingénierie. La correspondanc
 `0x01`/incident papier concorde avec l’observation humaine sur notre exemplaire ;
 la cause physique du `0x04` doit encore être testée. Les octets 2 et 3 ne sont
 pas identifiés par cette source et restent bruts dans nos mesures.
+
+## Contrôle de débit AE
+
+Le nouvel essai à énergie 14500 a reçu `51 78 ae 01 01 00 10 70 ff` à 1580 lignes
+envoyées, puis `51 78 ae 01 01 00 00 00 ff` au moment du défaut. Le protocole
+référencé décrit ces paquets comme XOFF et XON. Le prototype ne les traitait pas.
+Cela prouve un défaut du pilote, mais pas encore que ce défaut cause le bit `0x04`.
+
+`transport.py` fournit maintenant une session à notifications persistantes. Les
+écritures raster, de début et de fin sont suspendues entre XOFF et XON. Un défaut
+pendant cette attente interrompt le travail. Le test d'intégration de la commande
+image reproduit cette séquence sur un faux transport BLE et interdit toute ligne
+supplémentaire entre XOFF et XON. Les contrôles matériels restent nécessaires.
+
+Les scénarios suivants n'imposent aucune pause fixe sauf indication contraire,
+mais respectent toujours le contrôle de débit de l'imprimante. Ils observent aussi
+l'état pendant 60 s après le dernier envoi pour capter un défaut retardé. Les essais
+antérieurs au contrôle de débit ne sont pas une comparaison à variable unique
+avec ceux-ci ; la comparaison énergie 4000/14500 doit utiliser le même nouveau banc.

@@ -23,6 +23,7 @@ Usage:
 """
 import argparse, asyncio, sys, time, math
 from bleak import BleakClient, BleakScanner
+from transport import PrinterSession, FaultDetected, StateUnavailable
 
 from protocol import (
     WIDTH,
@@ -330,6 +331,11 @@ def assemble(strips, direction, gap_rows=8, gap_cols=8, labels=True):
 
 
 async def query_state(client, tx, timeout=1.5):
+    if isinstance(client, PrinterSession):
+        try:
+            return await client.sample(timeout=timeout)
+        except StateUnavailable:
+            return None
     got = []
     sub = None
     for s in client.services:
@@ -357,10 +363,6 @@ async def query_state(client, tx, timeout=1.5):
     return None
 
 
-class FaultDetected(Exception):
-    def __init__(self, state):
-        super().__init__("fault")
-        self.state = state
 
 
 def choose_pause_rows(rows, chunk, lookahead=48):
@@ -448,7 +450,7 @@ async def wait_cooling(client, tx, seconds, cool_max, label=""):
 async def preflight(client, tx, args):
     st = await query_state(client, tx)
     if st is None:
-        print("etat: pas de reponse A3 (on continue)")
+        print("etat: pas de reponse A3 (arret preventif)")
         return None
     print(f"etat initial: byte2={st['temp']} flags=0x{st['flags']:02x}")
     waited = 0.0
@@ -487,8 +489,17 @@ async def print_image(args, img):
     if not client:
         return 1
     try:
+        def log_session(event, **fields):
+            if event in ("flow_stop", "flow_resume", "flow_wait_start", "flow_wait_end"):
+                print(f"{event}: {fields}", flush=True)
+        client = PrinterSession(client, tx, log_session)
+        await client.subscribe()
         st = await preflight(client, tx, args)
-        if st and st["overheat"] and not args.force:
+        if st is None:
+            return 2
+        if st["flags"] == 0:
+            client.fault = None
+        if st and st["flags"] != 0 and not args.force:
             print("l'imprimante est encore en defaut : rien ne sortirait.")
             print("Laisse-la reposer (le defaut est retombe seul lors des essais), puis relance.")
             return 2
@@ -497,11 +508,21 @@ async def print_image(args, img):
                          probe=lambda: query_state(client, tx),
                          smart_pause=args.smart_pause, smart_window=args.smart_window)
         await finish_job(client, tx, feed_rows)
-        print("done")
+        post = await query_state(client, tx, timeout=4.0)
+        if post is None:
+            raise StateUnavailable("No final A3 state")
+        if client.fault:
+            raise FaultDetected(client.fault["state"])
+        if post["flags"] != 0:
+            raise StateUnavailable(f"Final flags: 0x{post['flags']:02x}")
+        print("envoi termine ; controle papier necessaire")
         return 0
     except FaultDetected as e:
         print(f"\ndefaut en cours de job (byte2={e.state['temp']} flags=0x{e.state['flags']:02x}) :")
         print("job interrompu, l'impression est incomplete.")
+        return 3
+    except StateUnavailable as exc:
+        print(f"Transport interrompu, impression non confirmee: {exc}")
         return 3
     finally:
         await client.disconnect()
@@ -542,8 +563,17 @@ async def print_series(args, strips, outdir, start=1):
     if not client:
         return 1
     try:
+        def log_session(event, **fields):
+            if event in ("flow_stop", "flow_resume", "flow_wait_start", "flow_wait_end"):
+                print(f"{event}: {fields}", flush=True)
+        client = PrinterSession(client, tx, log_session)
+        await client.subscribe()
         st = await preflight(client, tx, args)
-        if st and st["overheat"] and not args.force:
+        if st is None:
+            return 2
+        if st["flags"] == 0:
+            client.fault = None
+        if st and st["flags"] != 0 and not args.force:
             print("l'imprimante est encore en defaut : les donnees seraient avalees sans imprimer.")
             print("Laisse-la reposer (le defaut est retombe seul lors des essais), puis relance avec --resume.")
             return 2
@@ -552,6 +582,10 @@ async def print_series(args, strips, outdir, start=1):
                 print(f"bande {idx}/{len(rows_list)} : deja faite, sautee")
                 continue
             print(f"\nbande {idx}/{len(rows_list)}")
+            state["failed"] = idx
+            state["done"] = sorted(done)
+            state["total"] = len(rows_list)
+            save_state(outdir, state)
             try:
                 await stream_job(client, tx, rows, energy, delay, label=f"[{idx}] ",
                                  chunk=args.chunk_rows, chunk_pause=args.chunk_pause,
@@ -575,7 +609,8 @@ async def print_series(args, strips, outdir, start=1):
                 print(f"  etat apres bande {idx}: byte2={post['temp']} flags=0x{post['flags']:02x}")
             else:
                 print(f"  etat apres bande {idx}: pas de reponse (non confirme)")
-            if post and post["overheat"]:
+                raise StateUnavailable("No final A3 state; strip remains pending")
+            if post and (post["flags"] != 0 or client.fault):
                 print(f"  defaut detecte pendant la bande {idx} : elle est probablement")
                 print(f"  incomplete a la fin. Elle ne sera pas notee comme faite.")
                 state["failed"] = idx
@@ -593,14 +628,17 @@ async def print_series(args, strips, outdir, start=1):
             if idx != len(rows_list):
                 st = await wait_cooling(client, tx, args.cooldown, args.cool_max,
                                         label=f"[{idx}] ")
-                if st and st["overheat"] and not args.force:
+                if st and st["flags"] != 0 and not args.force:
                     print("defaut persistant : arret preventif.")
                     print("Relance la meme commande avec --resume apres une pause.")
                     state["failed"] = idx + 1
                     save_state(outdir, state)
                     return 3
-        print(f"\nserie complete : {len(done)}/{len(rows_list)} bandes")
+        print(f"\nserie envoyee : {len(done)}/{len(rows_list)} bandes ; controle papier necessaire")
         return 0
+    except (StateUnavailable, FaultDetected) as exc:
+        print(f"Transport interrompu, serie non confirmee: {exc}")
+        return 3
     finally:
         await client.disconnect()
 

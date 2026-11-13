@@ -20,7 +20,8 @@ signification des autres octets sont en cours d’investigation. Les noms intern
 `overheat` et `temp` sont historiques, pas des diagnostics matériels confirmés.
 
 `protocol.py` contient le codec et les commandes, sans dépendance à BLE ou aux images.
-`tinyprint_cli.py` contient le transport et les fonctions de découpe du prototype.
+`transport.py` gère la session BLE, les notifications et le contrôle de débit AE.
+`tinyprint_cli.py` contient les commandes utilisateur et les fonctions de découpe du prototype.
 Leur séparation complète reste prévue avant une publication éventuelle.
 Les photos personnelles et journaux bruts restent ignorés dans `private/` et `runs/`.
 
