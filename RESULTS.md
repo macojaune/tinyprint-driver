@@ -158,3 +158,22 @@ ni chronométré l’intervalle : cette observation ne distingue pas formellemen
 l’effet du redémarrage d’une récupération spontanée pendant le même intervalle.
 Elle ne prouve ni le refroidissement de la tête ni l’absence de récidive à 14500.
 Aucune nouvelle impression n’est lancée.
+
+## Essai à 13000 / 14 ms après redémarrage
+
+Même paire de photos, mêmes pixels, pas de pause fixe et contrôle de débit actif.
+État clair vérifié pendant 60 s avant le démarrage. XOFF à 2428 lignes envoyées,
+attente de 6,308 s jusqu’à XON, puis reprise. Premier `0x04` à 2548 lignes envoyées,
+dont 820 dans la deuxième trame. Le processus s’arrête avec le code 3 ; aucune
+nouvelle impression automatique n’est programmée. La géométrie et la longueur
+réellement imprimées de cet essai restent à confirmer par le propriétaire.
+13000 n’a donc pas évité le défaut sur cet essai. Cela ne mesure pas la valeur
+maximale utilisable entre 8000 et 13000.
+
+## Identification actualisée pour la documentation
+
+Après le test, une lecture `info` sans impression confirme le nom X5, les services
+AE30 et AE3A, TX AE01, notifications AE02 et la réponse firmware :
+`51 78 a8 01 0a 00 45 00 03 31 2e 33 2e 35 2e 33 a9 ff`, chaîne `E1.3.5.3`.
+L’état reçu au même moment est `04 0d 29`. Le propriétaire confirme que l’appareil
+ne comporte aucune étiquette ; fabricant et référence commerciale restent inconnus.
