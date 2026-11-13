@@ -28,3 +28,25 @@ avant de reprendre les deux longues bandes.
 Le contrôle court s’est terminé avec `flags=0x00` et le code de sortie 0.
 Marvin confirme ensuite que le papier avance et que la mire est régulière.
 Le test de faible énergie est relancé après cette confirmation.
+
+## Faible énergie, entraînement vérifié, contrôle de débit actif
+
+Énergie 4000, délai 14 ms, aucune pause fixe, deux bandes identiques. Résultat :
+3453 lignes envoyées, aucun `0x04`, aucune demande XOFF, aucun temps d’attente de
+flux. État final `00 0d 29` après 60 s supplémentaires d’observation, code de sortie 0.
+Marvin confirme deux bandes complètes et régulières d’environ 21,6 cm chacune.
+Il s’agit d’une réussite matériellement confirmée, pas encore d’une garantie de
+répétabilité ni d’un seuil d’énergie optimal.
+
+## Énergie 14500, même cadence, contrôle de débit actif
+
+Même entrée, délai 14 ms, sans pause fixe. XOFF à 1694 lignes envoyées, attente de
+8,534 s jusqu’à XON, puis reprise. Premier `0x04` à 2539 lignes envoyées, soit 811
+lignes envoyées dans la deuxième trame, 49,093 s après le début du premier job.
+Marvin confirme une avance régulière du papier jusqu’au voyant rouge.
+
+Le défaut est donc reproduit malgré le respect du contrôle de débit, sans patinage
+rapporté cette fois. Le défaut du transport et la mise en défaut énergétique ne
+sont pas équivalents. La comparaison 4000/14500 à pixels et délai constants renforce
+une dépendance à la charge énergétique ; elle ne mesure ni température ni courant
+et n’identifie pas à elle seule le composant responsable.
