@@ -168,7 +168,10 @@ La première bande de la photo sombre, réimprimée avec les mêmes pixels à 60
 est également confirmée lisible, longue de 28,8 cm et sans écrasement.
 Les deux premières bandes de cette photo ont ensuite été envoyées consécutivement
 par l’API web, sans pauses, et confirmées correctes sur papier avec 60 secondes
-de surveillance finale sans défaut. La série entière de six bandes reste non testée.
+de surveillance finale sans défaut. Un essai complet de six bandes sur un nouveau
+rouleau a ensuite terminé sans défaut ni tassement, mais le propriétaire décrit
+un rendu peu lisible : la qualité sur ce rouleau reste à améliorer. Un premier
+arrêt `0x01` lors de cette série provenait d’une fin de rouleau confirmée.
 La même mire à 8000 était fortement comprimée, même avec des pauses internes.
 Ce profil reste propre au matériel et au papier testés ; il ne garantit pas les
 autres contenus ou séries prolongées.

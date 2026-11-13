@@ -128,7 +128,32 @@ et marquées terminées. Aucun défaut n’est enregistré pendant l’envoi ni 
 **deux bandes d’environ 28,8 cm chacune, lisibles et sans écrasement**, y compris
 sur la deuxième. Le profil 6000 / 14 ms est donc validé pour cette paire sur ce
 papier et cet exemplaire, en plus de la mire dense et de la première bande isolée.
-L’impression de la série complète de six bandes reste distincte et non testée.
+Le contrôle de la série complète est décrit ci-dessous.
+
+### Série de six : premier arrêt causé par une fin de rouleau
+
+La première tentative de six bandes à 6000 s’arrête au contrôle de fin de la
+première bande, après 2304 lignes envoyées, avec `0x01`. Aucune bande n’est marquée
+terminée ; la deuxième n’est pas lancée par le pilote. Marvin décrit une avance
+devenue difficile en fin de ticket, puis confirme que le rouleau était terminé.
+Il n’avait pas ouvert le capot pendant l’envoi. Une lecture ultérieure retourne
+encore `01 1b 28`. Cet incident de consommable ne mesure pas la limite thermique
+du profil à 6000.
+
+### Série de six sur un nouveau rouleau : géométrie correcte, lisibilité insuffisante
+
+Après chargement d’un nouveau rouleau, le `0x01` disparaît. Le tirage reprend depuis
+la première bande, après 60 secondes continues d’état clair. Les six PNG sont
+vérifiés identiques aux originaux : 13824 lignes, 2806584 points noirs, énergie
+6000, délai 14 ms, aucune pause fixe interne ni entre tickets. L’envoi par l’API
+dure environ 219 secondes et termine les six bandes. Aucun défaut pendant l’envoi
+ni les 60 secondes de surveillance suivantes ; état final `00 0d 28`.
+
+Marvin confirme six bandes correctes en dimensions et régularité, mais **peu
+lisibles**. La couleur et le type du nouveau rouleau ainsi que la nature précise
+du défaut de rendu restent à préciser. L’envoi continu et la géométrie des six
+bandes sont donc confirmés sur cet essai ; la qualité du rendu reste à améliorer.
+Ne pas transformer ce résultat en validation complète de lisibilité sur tout papier.
 
 ## Incident papier à exclure des mesures de limite
 
