@@ -181,6 +181,8 @@ sur les deux premières bandes de la photo sombre : énergie par défaut à 6000
 14 ms, aucune pause, bitmaps identiques aux originaux. Le propriétaire confirme
 les deux bandes lisibles, longues de 28,8 cm et sans écrasement ; les 60 secondes
 de surveillance finale restent sans défaut. Voir `RESULTS.md` pour les mires et
-la portée matérielle de ces essais. La série complète de six bandes reste non testée.
+la portée matérielle de ces essais. La série complète de six bandes a ensuite
+terminé sur un nouveau rouleau, sans défaut ni tassement, mais avec une lisibilité
+jugée insuffisante par le propriétaire. L’amélioration du rendu reste donc ouverte.
 Le précédent profil à 8000 avait passé deux paires de photos, mais a échoué sur
 le nouveau contenu très sombre.
