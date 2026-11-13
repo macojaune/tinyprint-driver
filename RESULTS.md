@@ -147,3 +147,14 @@ Les fichiers sources et ce bilan sont commités localement dans `develop`. Aucun
 remote GitHub ni aucune publication n’ont été créés. Les images et traces brutes
 restent dans les dossiers ignorés. À la fin des essais, l’imprimante est en défaut
 `0x04` après le scénario à 14500/28 ms ; aucun tirage automatique ne reste en attente.
+
+## Contrôle après redémarrage manuel
+
+Marvin redémarre l’imprimante et constate la disparition apparente du défaut.
+La lecture BLE effectuée ensuite, sans impression, confirme `flags=0x00`, payload
+`00 0d 29`, avec un code de sortie 0. Le défaut n’est donc plus signalé après ce
+redémarrage. Nous n’avons pas effectué de lecture immédiatement avant le redémarrage
+ni chronométré l’intervalle : cette observation ne distingue pas formellement
+l’effet du redémarrage d’une récupération spontanée pendant le même intervalle.
+Elle ne prouve ni le refroidissement de la tête ni l’absence de récidive à 14500.
+Aucune nouvelle impression n’est lancée.
