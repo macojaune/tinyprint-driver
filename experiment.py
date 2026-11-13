@@ -34,6 +34,10 @@ class Monitor:
         self.sequence = 0
         self.fault = None
         self.subscription = None
+        self.flow_allowed = asyncio.Event()
+        self.flow_allowed.set()
+        self.flow_wait_seconds = 0.0
+        self.flow_stop_requests = 0
 
     async def subscribe(self):
         for service in self.client.services:
@@ -53,12 +57,22 @@ class Monitor:
         self.log("notification", frame=data.hex(" "), valid=valid,
                  state=state, rows_sent=self.rows, strip=self.strip,
                  strip_rows_sent=self.strip_rows)
+        if valid and data[2] == 0xAE and len(data[6:-2]) == 1:
+            value = data[6]
+            if value == 0x10:
+                self.flow_stop_requests += 1
+                self.flow_allowed.clear()
+                self.log("flow_stop", rows_sent=self.rows)
+            elif value == 0:
+                self.flow_allowed.set()
+                self.log("flow_resume", rows_sent=self.rows)
         if state and valid:
             self.latest = state
             self.sequence += 1
             if state["flags"] & 0x0F and self.fault is None:
                 self.fault = {"rows_sent": self.rows, "strip": self.strip,
                               "strip_rows_sent": self.strip_rows, "state": state}
+                self.flow_allowed.set()  # Wake a blocked sender so it can abort.
 
     async def sample(self, timeout=4):
         previous = self.sequence
@@ -88,6 +102,17 @@ class Monitor:
             await asyncio.sleep(5)
 
     async def write_gatt_char(self, tx, packet, response=False):
+        if not self.flow_allowed.is_set():
+            started = time.monotonic()
+            self.log("flow_wait_start", rows_sent=self.rows)
+            try:
+                await asyncio.wait_for(self.flow_allowed.wait(), timeout=60)
+            except asyncio.TimeoutError:
+                raise StateUnavailable("No AE 00 resume within 60 seconds")
+            finally:
+                elapsed = time.monotonic() - started
+                self.flow_wait_seconds += elapsed
+                self.log("flow_wait_end", rows_sent=self.rows, seconds=elapsed)
         if self.fault:
             raise driver.FaultDetected(self.fault["state"])
         await self.client.write_gatt_char(tx, packet, response=response)
@@ -140,12 +165,15 @@ async def run(args, rows, settings, log):
             summary["strips_completed"] = idx
             log("strip_complete", strip=idx, state=state, rows_sent=monitor.rows)
             # No deliberate pause between jobs. Header/feed/status overhead remains.
-        await asyncio.sleep(3)
-        state = await monitor.sample()
-        if monitor.fault:
-            raise driver.FaultDetected(state)
-        if state["flags"] != 0:
-            raise StateUnavailable("Nonzero final flags")
+        # The printer can still be consuming queued raster after the last write.
+        log("tail_observation_start", seconds=60)
+        for _ in range(60):
+            await asyncio.sleep(1)
+            state = await monitor.sample()
+            if monitor.fault:
+                raise driver.FaultDetected(state)
+            if state["flags"] != 0:
+                raise StateUnavailable("Nonzero final flags")
         summary["outcome"] = "completed_no_fault"
     except driver.FaultDetected as exc:
         summary["outcome"] = "fault_0x04" if exc.state["flags"] & 4 else "other_state_error"
@@ -157,7 +185,9 @@ async def run(args, rows, settings, log):
     finally:
         if monitor:
             summary.update(rows_sent=monitor.rows, first_fault=monitor.fault,
-                           last_state=monitor.latest, burn_dots_sent=monitor.burn_dots)
+                           last_state=monitor.latest, burn_dots_sent=monitor.burn_dots,
+                           flow_wait_seconds=monitor.flow_wait_seconds,
+                           flow_stop_requests=monitor.flow_stop_requests)
         if client and client.is_connected:
             await client.disconnect()
         log("result", **summary)
@@ -188,6 +218,7 @@ def main():
                        "black_dots": sum(b.bit_count() for row in raster for b in row)})
     settings = dict(SCENARIOS[args.scenario], inputs=inputs, settle_seconds=args.settle,
                     telemetry_every_rows=100, inter_strip_deliberate_pause=0,
+                    respect_ae_flow_control=True, final_observation_seconds=60,
                     note="Rows sent are not a measurement of physical printed rows")
     print(json.dumps(settings, indent=2), flush=True)
     if not args.execute:

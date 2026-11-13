@@ -74,6 +74,31 @@ class ExperimentTest(unittest.IsolatedAsyncioTestCase):
         client.disconnect.assert_awaited_once()
         self.assertEqual(events[-1], "result")
 
+    async def test_xoff_blocks_raster_until_xon(self):
+        client = FakeClient()
+        monitor = Monitor(client, None, lambda *a, **kw: None)
+        monitor.notify(None, driver.make_packet(0xAE, b"\x10"))
+        task = asyncio.create_task(monitor.write_gatt_char(None, driver.make_packet(0xA2, bytes(48))))
+        await asyncio.sleep(.01)
+        self.assertEqual(client.writes, [])
+        self.assertFalse(task.done())
+        monitor.notify(None, driver.make_packet(0xAE, b"\0"))
+        await task
+        self.assertEqual(len(client.writes), 1)
+        self.assertEqual(monitor.rows, 1)
+        self.assertEqual(monitor.flow_stop_requests, 1)
+
+    async def test_fault_while_xoff_aborts_without_writing(self):
+        client = FakeClient()
+        monitor = Monitor(client, None, lambda *a, **kw: None)
+        monitor.notify(None, driver.make_packet(0xAE, b"\x10"))
+        task = asyncio.create_task(monitor.write_gatt_char(None, driver.make_packet(0xA2, bytes(48))))
+        await asyncio.sleep(.01)
+        monitor.notify(None, driver.make_packet(0xA3, bytes([4, 13, 41])))
+        with self.assertRaises(driver.FaultDetected):
+            await task
+        self.assertEqual(client.writes, [])
+
 
 if __name__ == "__main__":
     unittest.main()
