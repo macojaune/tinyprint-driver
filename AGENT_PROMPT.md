@@ -50,7 +50,14 @@ restantes sont nommées et isolées des travaux qui peuvent avancer.
   fixtures synthétiques ; garde ses documents personnels hors des exemples publics.
 - **Découpe et assemblage :** vérifie `slice_image`, le manifeste et `tile-send`.
   Contrôle l’ordre, la rotation et les dimensions. Le mode `--mm` arrondit actuellement
-  au multiple de 48 mm ; une taille exacte nécessite un contrat de changement clair.
+  au multiple de 48 mm dans le CLI. L’atelier web utilise `photo_bands.py` pour une
+  largeur ou hauteur exacte au point près, avec un dernier ticket complété en blanc.
+  Préserve cette distinction et vérifie les marges dans les deux orientations.
+  Son aperçu réduit reste en mémoire ; seuls l’export et l’impression préparent les
+  PNG sur disque. Les budgets de calcul ne prouvent pas une capacité physique.
+- **Réglages photo web :** les préréglages et corrections se trouvent dans
+  `photo_bands.py`. La force de rendu est une compensation logicielle de luminosité,
+  séparée de l’énergie matérielle. Ne simule pas un résultat thermique sans mesure.
 - **Autre application ou intégration :** réutilise `protocol.py` et `transport.py`.
   Introduis une interface graphique, un serveur ou un service permanent seulement
   lorsque l’objectif le demande. Le dépôt n’inclut pas le serveur du clone TinyPOS.

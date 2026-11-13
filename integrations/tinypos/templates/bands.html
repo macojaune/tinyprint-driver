@@ -3,177 +3,314 @@
 {% block page_title %}Atelier photo en bandes{% endblock %}
 {% block head %}
 <style>
-.bands-workspace{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:2rem;align-items:start}.bands-controls label,.bands-controls legend{font-weight:600;font-size:.9rem}.bands-controls .field{margin-bottom:1.25rem}.bands-controls input:focus-visible,.bands-controls select:focus-visible,button:focus-visible{outline:2px solid var(--bs-primary);outline-offset:3px}.bands-preview{min-height:350px;display:grid;place-items:center;background:var(--bs-tertiary-bg);border:1px solid var(--bs-border-color);border-radius:12px;padding:1.5rem;overflow:auto}.bands-preview img{max-width:100%;max-height:650px;object-fit:contain;image-rendering:pixelated}.bands-empty{max-width:32ch;text-align:center;color:var(--bs-secondary-color)}.bands-summary{font-variant-numeric:tabular-nums}.bands-status{min-height:3rem;padding-top:1rem}.bands-controls summary{cursor:pointer;font-weight:600;margin-bottom:1rem}::selection{background:var(--bs-primary);color:var(--bs-white)}@media(max-width:850px){.bands-workspace{grid-template-columns:1fr}.bands-preview{min-height:220px}}
+.bands-workspace{display:grid;grid-template-columns:minmax(280px,350px) minmax(0,1fr);gap:2rem;align-items:start}.bands-controls label,.bands-controls legend{font-weight:600;font-size:.9rem}.bands-controls .field{margin-bottom:1.1rem}.bands-controls :focus-visible,.preview-panel :focus-visible{outline:2px solid var(--bs-primary);outline-offset:3px}.bands-dropzone{width:100%;padding:1.4rem 1rem;border:2px dashed var(--bs-border-color);border-radius:12px;background:var(--bs-tertiary-bg);color:var(--bs-body-color);text-align:center;transition:border-color .15s,background .15s}.bands-dropzone:hover,.bands-dropzone.dragover{border-color:var(--bs-primary);background:var(--bs-primary-bg-subtle)}.bands-dropzone .bi{font-size:1.6rem;display:block;margin-bottom:.4rem}.bands-controls .field-pair{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.preview-panel{position:sticky;top:76px;min-width:0}.bands-preview{min-height:320px;display:grid;place-items:center;background:var(--bs-tertiary-bg);border:1px solid var(--bs-border-color);border-radius:12px;padding:1rem;overflow:auto}.bands-preview img{max-width:100%;max-height:560px;object-fit:contain;image-rendering:pixelated}.bands-empty{max-width:32ch;text-align:center;color:var(--bs-secondary-color)}.bands-summary{font-variant-numeric:tabular-nums}.bands-status{min-height:3rem;padding-top:1rem}.bands-controls summary{cursor:pointer;font-weight:600;margin-bottom:1rem}.bands-list{max-height:170px;overflow:auto}.preview-toolbar{display:flex;justify-content:space-between;gap:.8rem;align-items:center;margin-bottom:.75rem}::selection{background:var(--bs-primary);color:var(--bs-white)}@media(max-width:850px){.bands-workspace{grid-template-columns:1fr}.preview-panel{position:static}.bands-preview{min-height:220px}.bands-controls .field-pair{grid-template-columns:1fr 1fr}}@media(prefers-reduced-motion:reduce){.bands-dropzone{transition:none}}
 </style>
 {% endblock %}
 {% block content %}
-<p class="text-body-secondary mb-4">Préparez une grande image à assembler, puis envoyez ses tickets dans le bon ordre. La préparation seule n’imprime rien.</p>
+<p class="text-body-secondary mb-4">Choisissez une photo : l’aperçu suit vos réglages automatiquement. Les fichiers imprimables ne sont créés qu’à l’export ou à l’impression.</p>
 <div class="bands-workspace">
 <form id="bands-form" class="bands-controls">
-<div class="field"><label for="photo" class="form-label">Photo à découper</label><input id="photo" name="file" type="file" accept="image/*" required class="form-control"><div class="form-text">Jusqu’à 20 Mo et 20 millions de pixels.</div></div>
+<div class="field">
+<input id="photo" type="file" accept="image/*" hidden>
+<button id="dropzone" type="button" class="bands-dropzone"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i><strong>Choisir ou déposer une photo</strong><span class="d-block small text-body-secondary mt-2">Cliquez, glissez une image, ou collez-la avec ⌘V / Ctrl+V.</span></button>
+<div class="d-flex justify-content-between align-items-start gap-2 mt-2"><span id="filename" class="small text-break text-body-secondary">Jusqu’à 20 Mo et 20 millions de pixels.</span><button id="remove" type="button" class="btn btn-sm btn-link text-danger" hidden>Retirer</button></div>
+</div>
 <div class="field"><label for="direction" class="form-label">Assemblage</label><select id="direction" name="direction" class="form-select"><option value="vertical">Bandes verticales, côte à côte</option><option value="horizontal">Bandes horizontales, superposées</option></select></div>
-<div class="field"><label for="count" class="form-label">Nombre de tickets</label><input id="count" name="count" type="number" min="1" max="20" value="3" required class="form-control"><div class="form-text">Chaque ticket mesure environ 48 mm sur l’axe de découpe. Les dimensions finales apparaîtront dans l’aperçu.</div></div>
-<div class="field"><label for="dither" class="form-label">Rendu noir et blanc</label><select id="dither" name="dither" class="form-select"><option value="floyd">Tramage Floyd–Steinberg</option><option value="atkinson">Tramage Atkinson</option><option value="bayer">Tramage Bayer</option><option value="none">Seuil simple, sans tramage</option></select></div>
-<div class="field"><label for="gain" class="form-label">Luminosité</label><input id="gain" name="gain" type="number" min="0.25" max="4" step="0.05" value="1" required class="form-control"></div>
-<details><summary>Réglages d’impression</summary>
-<div class="field"><label for="energy" class="form-label">Énergie</label><input id="energy" name="energy" type="number" min="1" max="65535" value="8000" required class="form-control"><div class="form-text">8000 a passé les essais sur notre X5. Les autres imprimantes et papiers restent à vérifier.</div></div>
+<div class="field"><label for="size_mode" class="form-label">Définir le format par</label><select id="size_mode" name="size_mode" class="form-select"><option value="count">Le nombre de tickets</option><option value="width">La largeur finale de l’image</option><option value="height">La hauteur finale de l’image</option></select></div>
+<div class="field" id="count-field"><label for="count" class="form-label">Nombre de tickets</label><input id="count" name="count" type="number" min="1" step="1" value="3" required class="form-control"><div class="form-text">Plus de limite fixe à 20. Le calcul vérifie la longueur de chaque ticket et le volume total.</div></div>
+<div class="field" id="size-field" hidden><label for="size_cm" class="form-label" id="size-label">Largeur finale, en cm</label><input id="size_cm" type="number" min="0.1" step="0.1" value="20" class="form-control" disabled><div class="form-text">Les proportions sont conservées. Une marge blanche peut rester sur le dernier ticket et devra être recoupée.</div></div>
+<hr class="my-4">
+<div class="field"><label for="preset" class="form-label">Préréglage photo</label><select id="preset" name="preset" class="form-select"><option value="custom">Personnalisé / neutre</option><option value="portrait">Portrait</option><option value="sharp">Détails nets</option><option value="balanced" selected>Équilibré</option><option value="high_contrast">Contraste fort / illustration</option><option value="halftone">Demi-teintes / journal</option></select><div class="form-text">Les réglages du studio TinyPOS, ajustables individuellement.</div></div>
+<div class="field"><label for="dither" class="form-label">Algorithme de tramage</label><select id="dither" name="dither" class="form-select"><option value="floyd">Floyd–Steinberg</option><option value="atkinson">Atkinson</option><option value="bayer">Bayer 8×8</option><option value="none">Seuil simple, sans tramage</option></select></div>
+<div class="field-pair"><div class="field"><label for="sharpness" class="form-label">Netteté</label><input id="sharpness" name="sharpness" type="number" min="0" max="3" step="0.05" value="1" required class="form-control"></div><div class="field"><label for="contrast" class="form-label">Contraste</label><input id="contrast" name="contrast" type="number" min="0.25" max="3" step="0.01" value="1.15" required class="form-control"></div></div>
+<div class="field-pair"><div class="field"><label for="brightness" class="form-label">Luminosité</label><input id="brightness" name="brightness" type="number" min="0.25" max="3" step="0.01" value="1.03" required class="form-control"></div><div class="field"><label for="gain" class="form-label">Courbe gamma</label><input id="gain" name="gain" type="number" min="0.25" max="4" step="0.05" value="1" required class="form-control"></div></div>
+<div class="field"><label for="strength" class="form-label">Force de rendu / noirceur</label><select id="strength" name="strength" class="form-select"><option value="1">1 · compensation claire</option><option value="2">2 · clair</option><option value="3">3 · modéré</option><option value="4">4 · normal</option><option value="5">5 · sombre</option><option value="6">6 · très sombre</option><option value="7" selected>7 · sans compensation claire</option></select><div class="form-text">Compensation logicielle du studio. Elle ne change pas l’énergie thermique choisie ci-dessous.</div></div>
+<div class="form-check mb-4"><input id="autocrop" name="autocrop" type="checkbox" class="form-check-input"><label for="autocrop" class="form-check-label">Recadrer les marges blanches de la source</label></div>
+<details><summary>Réglages de l’imprimante</summary>
+<div class="field"><label for="energy" class="form-label">Énergie thermique</label><input id="energy" name="energy" type="number" min="1" max="65535" value="8000" required class="form-control"><div class="form-text">8000 a passé les essais X5. 13000 et 14500 ont déclenché un défaut sur les longues photos. Ce réglage agit sur la tête, pas sur la simulation visuelle.</div></div>
 <div class="field"><label for="row_delay" class="form-label">Délai entre lignes, en secondes</label><input id="row_delay" name="row_delay" type="number" min="0.001" max="0.2" step="0.001" value="0.014" required class="form-control"></div>
-<div class="field"><label for="cooldown" class="form-label">Pause entre tickets, en secondes</label><input id="cooldown" name="cooldown" type="number" min="0" max="120" value="0" required class="form-control"><div class="form-text">Le contrôle de débit automatique de l’imprimante reste actif.</div></div>
+<div class="field"><label for="cooldown" class="form-label">Pause entre tickets, en secondes</label><input id="cooldown" name="cooldown" type="number" min="0" max="120" value="0" required class="form-control"></div>
 </details>
-<button id="prepare" type="submit" class="btn btn-primary w-100">Préparer les bandes</button>
 </form>
-<section aria-label="Aperçu et impression">
-<div class="bands-preview"><p id="empty" class="bands-empty">Choisissez une photo et préparez ses bandes pour voir l’assemblage final.</p><div id="assembly-holder" hidden></div></div>
-<div id="result" class="mt-3" hidden><p id="dimensions" class="bands-summary fw-semibold mb-1"></p><p id="order" class="text-body-secondary small"></p><ol id="bands" class="small"></ol>
-<div class="d-flex gap-2 flex-wrap"><a id="download" class="btn btn-outline-secondary">Télécharger les bandes ZIP</a><button id="send" class="btn btn-primary" type="button">Imprimer la série</button><button id="resume" class="btn btn-outline-primary" type="button" hidden>Reprendre les bandes restantes</button><button id="cancel" class="btn btn-outline-danger" type="button" hidden>Arrêter l’envoi</button></div>
-<p class="form-text">L’impression démarre uniquement après votre clic. Une fin d’envoi doit aussi être vérifiée sur le papier.</p></div>
+<section class="preview-panel" aria-label="Aperçu et impression">
+<div class="preview-toolbar"><strong>Aperçu en direct</strong><div class="btn-group btn-group-sm" role="group" aria-label="Affichage de l’aperçu"><button id="thermal" type="button" class="btn btn-primary" aria-pressed="true">Thermique</button><button id="original" type="button" class="btn btn-outline-secondary" aria-pressed="false" disabled>Originale</button></div></div>
+<div class="bands-preview"><p id="empty" class="bands-empty">Choisissez, déposez ou collez une photo pour commencer.</p><div id="assembly-holder" hidden></div></div>
+<p class="form-text">Aperçu réduit en mémoire ; les traits bleus marquent les tickets et ne sont pas imprimés. Le tramage exact reste visible dans les PNG exportés.</p>
+<div id="result" class="mt-3" hidden><p id="dimensions" class="bands-summary fw-semibold mb-1"></p><p id="layout-note" class="text-body-secondary small"></p><p id="order" class="text-body-secondary small"></p><details class="mb-3"><summary>Ordre et longueur des tickets</summary><ol id="bands" class="bands-list small mt-2"></ol></details>
+<div class="d-flex gap-2 flex-wrap"><button id="download" class="btn btn-outline-secondary" type="button" disabled>Exporter les bandes ZIP</button><button id="send" class="btn btn-primary" type="button" disabled>Imprimer la série</button><button id="resume" class="btn btn-outline-primary" type="button" hidden>Reprendre les bandes restantes</button><button id="cancel" class="btn btn-outline-danger" type="button" hidden>Arrêter l’envoi</button></div>
+<p class="form-text">Aucune impression automatique. L’export et l’impression génèrent les fichiers définitifs.</p></div>
 <p id="status" class="bands-status" role="status" aria-live="polite"></p>
 </section></div>
 {% endblock %}
 {% block scripts %}
 <script>
 (() => {
-    const form = document.getElementById('bands-form');
-    const status = document.getElementById('status');
-    const send = document.getElementById('send');
-    const resume = document.getElementById('resume');
-    const cancel = document.getElementById('cancel');
-    let series = null, timer = null, dirty = false;
+    const $ = id => document.getElementById(id);
+    const form = $('bands-form');
+    const presets = {
+        custom: ['floyd', 0, 1, 1], portrait: ['floyd', 1.2, 1.12, 1.08],
+        sharp: ['atkinson', 2, 1.22, 1.05], balanced: ['floyd', 1, 1.15, 1.03],
+        high_contrast: ['atkinson', 1.5, 1.38, 1], halftone: ['bayer', 1, 1.2, 1.02]
+    };
+    let file = null, series = null, preview = null, sourceUrl = null, view = 'thermal';
+    let revision = 0, previewRevision = -1, preparedRevision = -1;
+    let busy = false, printing = false, debounce = null, controller = null, polling = null;
+    const cm = mm => (mm / 10).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
 
     function message(text, error = false) {
-        status.textContent = text;
-        status.classList.toggle('text-danger', error);
+        $('status').textContent = text;
+        $('status').classList.toggle('text-danger', error);
+    }
+    function sizeFields() {
+        const exact = $('size_mode').value !== 'count';
+        $('count-field').hidden = exact;
+        $('size-field').hidden = !exact;
+        $('count').disabled = exact || busy || printing;
+        $('size_cm').disabled = !exact || busy || printing;
+        $('size-label').textContent = $('size_mode').value === 'height' ? 'Hauteur finale, en cm' : 'Largeur finale, en cm';
+    }
+    function buttons() {
+        const valid = previewRevision === revision || preparedRevision === revision;
+        $('download').disabled = busy || printing || !valid;
+        $('send').disabled = busy || printing || !valid || !(preview || series)?.configured;
+        $('resume').disabled = busy || printing || preparedRevision !== revision || !series?.configured;
+        $('original').disabled = !sourceUrl;
+    }
+    function controls() {
+        form.querySelectorAll('input,select,button').forEach(el => el.disabled = busy || printing);
+        sizeFields();
+        buttons();
     }
     async function request(url, options = {}) {
         const response = await fetch(url, options);
-        if (response.status === 401 || response.redirected) {
-            throw Error('Session expirée. Reconnectez-vous à TinyPOS.');
-        }
+        if (response.status === 401 || response.redirected) throw Error('Session expirée. Reconnectez-vous à TinyPOS.');
         const data = await response.json();
-        if (!response.ok) {
-            throw Error(typeof data.detail === 'string' ? data.detail : 'Vérifiez les champs et réessayez.');
-        }
+        if (!response.ok) throw Error(typeof data.detail === 'string' ? data.detail : 'Vérifiez les paramètres et réessayez.');
         return data;
     }
-    function state(data) {
-        const active = ['queued', 'sending'].includes(data.status);
-        send.disabled = active || dirty || !data.configured;
-        resume.hidden = !['failed', 'cancelled', 'interrupted'].includes(data.status);
-        resume.disabled = dirty || !data.configured;
-        cancel.hidden = !active;
-        form.querySelectorAll('input,select').forEach(el => el.disabled = active);
-        document.getElementById('prepare').disabled = active;
-        if (data.status === 'sent') {
-            message(`Envoi terminé : ${data.done.length} / ${data.count} bandes envoyées. Vérifiez l’image sur le papier.`);
-        } else if (active) {
-            message(`${data.status === 'queued' ? 'En attente de l’imprimante.' : 'Envoi en cours.'} ${data.done.length} / ${data.count} bandes envoyées.`);
-        } else if (data.message) {
-            message(data.message, data.status === 'failed');
-        }
-        if (!active && timer) {
-            clearInterval(timer);
-            timer = null;
-        }
+    function parameters() {
+        if (!file) throw Error('Choisissez ou collez la photo source pour actualiser l’aperçu.');
+        if (!form.checkValidity()) throw Error('Complétez les paramètres avec des valeurs valides.');
+        const data = new FormData(form);
+        data.append('file', file);
+        data.set('autocrop', $('autocrop').checked ? 'true' : 'false');
+        if ($('size_mode').value !== 'count') data.set('size_mm', String(Number($('size_cm').value) * 10));
+        return data;
     }
-    function show(data) {
-        series = data;
-        dirty = false;
-        document.getElementById('empty').hidden = true;
-        const holder = document.getElementById('assembly-holder');
-        let image = document.getElementById('assembly');
+    function setImage() {
+        const src = view === 'original' && sourceUrl ? sourceUrl : preview?.preview;
+        if (!src) return;
+        let image = $('assembly');
         if (!image) {
             image = document.createElement('img');
             image.id = 'assembly';
-            image.alt = 'Aperçu de l’assemblage des tickets';
-            holder.replaceChildren(image);
+            image.alt = 'Aperçu de la photo et de sa découpe';
+            $('assembly-holder').replaceChildren(image);
         }
-        holder.hidden = false;
-        image.src = `/api/internal/bands/${data.id}/preview`;
-        document.getElementById('result').hidden = false;
-        const format = n => (n / 10).toLocaleString('fr-FR', {maximumFractionDigits: 1});
-        document.getElementById('dimensions').textContent = `${data.count} tickets · ${data.size_mm.map(format).join(' × ')} cm`;
-        document.getElementById('order').textContent = data.direction === 'vertical'
-            ? 'Assemblez les tickets de gauche à droite.'
-            : 'Remettez les tickets à l’endroit, puis assemblez-les de haut en bas.';
-        const list = document.getElementById('bands');
-        list.replaceChildren();
+        $('assembly-holder').hidden = false;
+        $('empty').hidden = true;
+        image.src = src;
+        ['thermal', 'original'].forEach(id => {
+            const active = id === view;
+            $(id).className = active ? 'btn btn-primary' : 'btn btn-outline-secondary';
+            $(id).setAttribute('aria-pressed', String(active));
+        });
+    }
+    function show(data) {
+        $('result').hidden = false;
+        $('dimensions').textContent = `${data.count} tickets · image utile ${data.size_mm.map(cm).join(' × ')} cm`;
+        const plan = data.layout || {};
+        let note = '';
+        if (plan.trim_mm > 0) note = `Dernier ticket : ${cm(plan.last_content_mm)} cm utiles sur 4,8 cm. Marge blanche de ${cm(plan.trim_mm)} cm à recouper.`;
+        if (plan.upscale > 1) note += ` Agrandissement ×${plan.upscale} ; le détail dépend de la résolution de la source.`;
+        $('layout-note').textContent = note;
+        $('order').textContent = data.direction === 'vertical' ? 'Assemblez les tickets de gauche à droite.' : 'Remettez les tickets à l’endroit, puis assemblez-les de haut en bas.';
+        $('bands').replaceChildren();
         data.bands.forEach(band => {
             const item = document.createElement('li');
-            item.textContent = `${band.rows} lignes · ${format(band.length_mm)} cm de long`;
-            list.append(item);
+            item.textContent = `${band.rows} lignes · ${cm(band.length_mm)} cm de long`;
+            $('bands').append(item);
         });
-        document.getElementById('download').href = `/api/internal/bands/${data.id}/download`;
-        const url = new URL(location.href);
-        url.searchParams.set('series', data.id);
-        history.replaceState(null, '', url);
-        state(data);
+        buttons();
+        setImage();
+    }
+    async function updatePreview() {
+        if (busy || printing || !file) return;
+        const version = revision;
+        let data;
+        try { data = parameters(); } catch (error) { message(error.message, true); return; }
+        if (controller) controller.abort();
+        controller = new AbortController();
+        message('Actualisation de l’aperçu…');
+        try {
+            const response = await request('/api/internal/bands/preview', { method: 'POST', body: data, signal: controller.signal });
+            if (version !== revision) return;
+            preview = response;
+            previewRevision = version;
+            show(response);
+            message('Aperçu à jour. Les fichiers imprimables ne sont pas encore générés.');
+        } catch (error) {
+            if (error.name !== 'AbortError' && version === revision) message(error.message, true);
+        }
+    }
+    function schedule(immediate = false) {
+        clearTimeout(debounce);
+        debounce = setTimeout(updatePreview, immediate ? 0 : 350);
+    }
+    function changed(event) {
+        if (event?.target.id === 'photo') return;
+        const oldRevision = revision++;
+        preparedRevision = -1;
+        if (controller) controller.abort();
+        if (event?.target.id === 'preset') {
+            const values = presets[$('preset').value];
+            ['dither', 'sharpness', 'contrast', 'brightness'].forEach((id, index) => $(id).value = values[index]);
+        }
+        sizeFields();
+        buttons();
+        if (['energy', 'row_delay', 'cooldown'].includes(event?.target.id) && preview && previewRevision === oldRevision && form.checkValidity()) {
+            previewRevision = revision;
+            buttons();
+            message('Réglage de l’imprimante modifié. L’aperçu ne simule pas l’énergie thermique ni le mouvement du papier.');
+        } else if (file) {
+            schedule();
+        } else if (series) {
+            message('Rechargez la photo source pour modifier le rendu de cette série.', true);
+        }
+    }
+    function chooseFile(next) {
+        if (busy || printing) return;
+        if (!next || (next.type && !next.type.startsWith('image/'))) { message('Choisissez une image valide.', true); return; }
+        if (next.size > 20 * 1024 * 1024) { message('La photo dépasse 20 Mo.', true); return; }
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        file = next;
+        sourceUrl = URL.createObjectURL(file);
+        $('filename').textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} Mo`;
+        $('remove').hidden = false;
+        view = 'thermal';
+        revision++;
+        previewRevision = preparedRevision = -1;
+        $('resume').hidden = true;
+        buttons();
+        schedule(true);
+    }
+    $('dropzone').addEventListener('click', () => $('photo').click());
+    $('photo').addEventListener('change', () => chooseFile($('photo').files[0]));
+    ['dragenter', 'dragover'].forEach(name => $('dropzone').addEventListener(name, event => {
+        event.preventDefault();
+        $('dropzone').classList.add('dragover');
+    }));
+    ['dragleave', 'drop'].forEach(name => $('dropzone').addEventListener(name, event => {
+        event.preventDefault();
+        $('dropzone').classList.remove('dragover');
+    }));
+    $('dropzone').addEventListener('drop', event => chooseFile(event.dataTransfer.files[0]));
+    document.addEventListener('paste', event => {
+        const image = [...(event.clipboardData?.items || [])].find(item => item.type.startsWith('image/'));
+        if (image && !busy && !printing) { event.preventDefault(); chooseFile(image.getAsFile()); }
+    });
+    $('remove').addEventListener('click', () => {
+        clearTimeout(debounce);
+        if (controller) controller.abort();
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        sourceUrl = file = preview = series = null;
+        revision++;
+        previewRevision = preparedRevision = -1;
+        $('photo').value = '';
+        $('filename').textContent = 'Jusqu’à 20 Mo et 20 millions de pixels.';
+        $('remove').hidden = $('result').hidden = $('assembly-holder').hidden = true;
+        $('empty').hidden = false;
+        $('resume').hidden = true;
+        history.replaceState(null, '', location.pathname);
+        buttons();
+        message('Choisissez, déposez ou collez une nouvelle photo.');
+    });
+    form.addEventListener('input', changed);
+    form.addEventListener('submit', event => { event.preventDefault(); schedule(true); });
+    ['thermal', 'original'].forEach(id => $(id).addEventListener('click', () => { view = id; setImage(); }));
+
+    async function ensurePrepared() {
+        if (series && preparedRevision === revision) return series;
+        if (previewRevision !== revision) throw Error('Attendez la mise à jour de l’aperçu avant de continuer.');
+        const version = revision;
+        const data = parameters();
+        busy = true;
+        controls();
+        message('Génération des fichiers imprimables…');
+        try {
+            const response = await request('/api/internal/bands/prepare', { method: 'POST', body: data });
+            if (version !== revision) throw Error('La photo ou les réglages ont changé. Réessayez.');
+            series = response;
+            preparedRevision = version;
+            const url = new URL(location.href);
+            url.searchParams.set('series', response.id);
+            history.replaceState(null, '', url);
+            show(response);
+            return response;
+        } finally { busy = false; controls(); }
+    }
+    $('download').addEventListener('click', async () => {
+        try {
+            const ready = await ensurePrepared();
+            location.assign(`/api/internal/bands/${ready.id}/download`);
+            message('Bandes générées. Téléchargement du ZIP demandé.');
+        } catch (error) { message(error.message, true); }
+    });
+    function state(data) {
+        printing = ['queued', 'sending'].includes(data.status);
+        $('cancel').hidden = !printing;
+        $('resume').hidden = !['failed', 'cancelled', 'interrupted'].includes(data.status);
+        controls();
+        if (data.status === 'sent') message(`Envoi terminé : ${data.done.length} / ${data.count} bandes envoyées. Vérifiez l’image sur le papier.`);
+        else if (printing) message(`${data.status === 'queued' ? 'En attente de l’imprimante.' : 'Envoi en cours.'} ${data.done.length} / ${data.count} bandes envoyées.`);
+        else if (data.message) message(data.message, data.status === 'failed');
+        if (!printing && polling) { clearInterval(polling); polling = null; }
     }
     async function refresh() {
-        try {
-            state(await request(`/api/internal/bands/${series.id}`));
-        } catch (error) {
-            clearInterval(timer);
-            timer = null;
-            message(error.message, true);
-        }
+        try { state(await request(`/api/internal/bands/${series.id}`)); }
+        catch (error) { clearInterval(polling); polling = null; message(error.message, true); }
     }
-    form.addEventListener('input', () => {
-        if (!series) return;
-        dirty = true;
-        send.disabled = resume.disabled = true;
-        document.getElementById('download').removeAttribute('href');
-        message('Réglages modifiés. Préparez un nouvel aperçu avant d’imprimer.');
-    });
-    form.addEventListener('submit', async event => {
-        event.preventDefault();
-        const button = document.getElementById('prepare');
-        button.disabled = true;
-        message('Préparation de l’aperçu…');
-        try {
-            show(await request('/api/internal/bands/prepare', {method: 'POST', body: new FormData(form)}));
-            message(series.configured ? 'Aperçu prêt. Vous pouvez télécharger ou imprimer les bandes.'
-                : 'Aperçu prêt. Configurez une adresse d’imprimante au lancement pour activer l’impression.');
-        } catch (error) {
-            message(error.message, true);
-        } finally {
-            button.disabled = false;
-        }
-    });
     async function print(continuing) {
-        if (!series || dirty) return;
-        send.disabled = resume.disabled = true;
         try {
-            await request(`/api/internal/bands/${series.id}/print?resume=${continuing}`, {method: 'POST'});
-            state({...series, status: 'queued', done: []});
-            timer = setInterval(refresh, 1500);
+            const ready = await ensurePrepared();
+            printing = true;
+            controls();
+            await request(`/api/internal/bands/${ready.id}/print?resume=${continuing}`, { method: 'POST' });
+            state({ ...ready, status: 'queued' });
+            polling = setInterval(refresh, 1500);
             await refresh();
-        } catch (error) {
-            send.disabled = resume.disabled = false;
-            message(error.message, true);
-        }
+        } catch (error) { printing = false; controls(); message(error.message, true); }
     }
-    send.addEventListener('click', () => print(false));
-    resume.addEventListener('click', () => print(true));
-    cancel.addEventListener('click', async () => {
-        try {
-            await request(`/api/internal/bands/${series.id}/cancel`, {method: 'POST'});
-            await refresh();
-        } catch (error) {
-            message(error.message, true);
-        }
+    $('send').addEventListener('click', () => print(false));
+    $('resume').addEventListener('click', () => print(true));
+    $('cancel').addEventListener('click', async () => {
+        try { await request(`/api/internal/bands/${series.id}/cancel`, { method: 'POST' }); await refresh(); }
+        catch (error) { message(error.message, true); }
     });
+    sizeFields();
     const saved = new URL(location.href).searchParams.get('series');
     if (saved) {
         request(`/api/internal/bands/${encodeURIComponent(saved)}`).then(data => {
-            form.elements.count.value = data.count;
-            form.elements.direction.value = data.direction;
-            form.elements.dither.value = data.render.dither;
-            form.elements.gain.value = data.render.gain;
-            ['energy', 'row_delay', 'cooldown'].forEach(key => form.elements[key].value = data.settings[key]);
+            series = data;
+            const plan = data.layout || {};
+            $('count').value = data.count;
+            $('direction').value = data.direction;
+            $('size_mode').value = plan.size_mode || 'count';
+            if (plan.requested_mm) $('size_cm').value = plan.requested_mm / 10;
+            const defaults = { preset: 'custom', dither: 'floyd', gain: 1, sharpness: 0, contrast: 1, brightness: 1, strength: 7 };
+            Object.entries({ ...defaults, ...data.render }).forEach(([key, value]) => { if ($(key) && key !== 'autocrop') $(key).value = value; });
+            $('autocrop').checked = data.render.autocrop || false;
+            ['energy', 'row_delay', 'cooldown'].forEach(key => $(key).value = data.settings[key]);
+            preparedRevision = revision;
+            preview = { ...data, preview: `/api/internal/bands/${data.id}/preview` };
+            previewRevision = revision;
             show(data);
-            if (['queued', 'sending'].includes(data.status)) timer = setInterval(refresh, 1500);
+            state(data);
+            if (!printing && data.status === 'prepared') message('Série restaurée. Rechargez la source uniquement si vous souhaitez modifier l’image.');
+            if (printing) polling = setInterval(refresh, 1500);
         }).catch(error => message(error.message, true));
     }
 })();
+
 </script>
 {% endblock %}
