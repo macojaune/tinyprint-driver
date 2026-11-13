@@ -93,7 +93,8 @@ L’énergie, le délai par ligne et la pause entre tickets sont séparés, dans
 réglages d’impression repliés. Ils démarrent à **8000 / 14 ms / aucune pause fixe**.
 Changer l’énergie ne modifie pas l’aperçu : son effet dépend du papier et du matériel,
 et n’est pas simulé. Les essais à 13000 et 14500 ont rencontré des défauts sur notre
-exemplaire ; voir `RESULTS.md`. Le réglage classique de force TinyPOS garde son
+exemplaire. Un tirage très sombre a également déclenché `0x04` à 8000 : ce réglage
+ne garantit donc pas l’absence de défaut. Voir `RESULTS.md`. Le réglage classique de force TinyPOS garde son
 comportement propre ; la nouvelle échelle de compensation concerne cet atelier.
 
 ## Réutilisation du pilote et des fonctions existantes

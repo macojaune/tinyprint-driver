@@ -1,5 +1,50 @@
 # Résultats matériels du 12 novembre 2026
 
+## Complément : défaut à 8000 sur une photo très sombre
+
+Une série web de six bandes horizontales carrées de 28,8 × 28,8 cm a rencontré
+`0x04`, avec énergie 8000, délai 14 ms et aucune pause fixe. Le rendu utilisait
+Atkinson, netteté 2,5, contraste 1,22, luminosité 1,05, gamma 1 et force logicielle 4.
+Les six PNG sauvegardés font chacun 384 × 2304 points. Leur conversion en lignes
+de 48 octets et en paquets A2 conserve bien les 2304 lignes ; aucune réduction de
+moitié n’a été observée dans ce chemin logiciel.
+
+Le journal indique 2304 lignes envoyées pour la première bande, puis un état A3
+clair. Le défaut `0x04` apparaît pendant la deuxième bande, après le repère de
+600 lignes. Aucun XOFF n’est consigné. L’état de reprise conserve la première
+bande dans `done`, ce qui signifie ici envoi et contrôle A3 terminés, sans preuve
+de bonne avance physique. Ne pas considérer ce ticket comme validé sur papier.
+
+Marvin décrit un tirage de moins de 15 cm, saccadé, dont il ne peut pas identifier
+précisément la partie manquante. La photo est abstraite et sombre. L’absence du
+bas reconnaissable de la photo entière ne suffit pas à identifier une troncature
+de la première bande : en découpe horizontale, celle-ci ne contient que le haut.
+La compression, la perte de lignes et l’exécution retardée ne sont pas départagées.
+
+La première bande contient 785398 points noirs, soit 88,77 % de couverture, et sa
+fenêtre de 400 lignes la plus dense atteint 97,93 %. C’est légèrement plus de
+points noirs que les deux bandes réunies des anciens essais réussis à 8000
+qui totalisaient 772736 points noirs. Ce compte ne mesure ni température ni
+puissance, mais montre que les charges des deux expériences sont différentes.
+8000 ne constitue donc pas un réglage universel évitant le défaut.
+
+Une lecture ultérieure a trouvé l’état clair `00 0d 29`. Une mire claire distincte,
+384 × 2304 points, a ensuite été envoyée par le bridge avec énergie 8000 et délai
+14 ms, sans pause. Marvin confirme 28 cm entre ses repères 0 et 280 mm, régulièrement
+espacés. L’échelle est donc correcte sur ce tirage long peu chargé. Il observe
+également une avance plus rapide sur les contenus clairs que sur les contenus sombres.
+Le résultat du tirage sombre ne se déduit pas de cette réussite.
+
+À la demande de Marvin, la même mire est répétée avec un fond noir et une couverture
+de 89,90 %, en conservant 384 × 2304 points, les repères, énergie 8000, délai 14 ms
+et aucune pause. L’état initial est clair. Les 2304 lignes sont envoyées, puis le
+contrôle A3 final reçoit `0x04`, environ 37,5 s après la demande d’impression. La
+bande reste non terminée dans l’état de reprise. Ce scénario reproduit donc le
+défaut sur une seule longue bande sombre, sans le rendu Atkinson de la photo.
+La mesure des graduations de cette mire est encore attendue. Le mécanisme physique
+exact reste inconnu : cette expérience ne mesure ni chauffe, ni tension, ni courant,
+ni quantité de données réellement exécutée par le firmware.
+
 ## Incident papier à exclure des mesures de limite
 
 Papier rose, imprimante branchée en USB selon Marvin. Un premier essai a rencontré
