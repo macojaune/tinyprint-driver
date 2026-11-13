@@ -7,8 +7,9 @@ réparties sur plusieurs bandes de papier.
 Le projet contient un codec de protocole indépendant, une session Bluetooth Low
 Energy avec contrôle de débit, un CLI et un banc d’essais matériels. Il s’agit d’un
 prototype testé sur **un exemplaire X5 sous macOS**, pas d’un pilote universel.
-La publication open source est prévue ; ce dépôt est actuellement local, sans
-remote GitHub ni licence de redistribution choisie.
+Le dépôt est sauvegardé sur [GitHub, en privé](https://github.com/macojaune/tinyprint-driver),
+avec le développement sur `develop`. La publication open source est prévue ;
+la licence de redistribution et l’audit de provenance restent à finaliser.
 
 ## L’imprimante de référence
 
