@@ -89,3 +89,14 @@ lisible avec des proportions correctes sur les deux bandes.
 Ce résultat est meilleur que le tirage trop pâle à 4000 et que le tirage comprimé
 puis arrêté à 14500. Il ne constitue pas un seuil universel. Une répétition identique
 est lancée avant de tester une cadence plus lente à 14500.
+
+## Répétition à énergie 8000
+
+Deuxième essai identique : 3453 lignes, aucune demande XOFF, aucun `0x04`, état
+final `00 0c 29` après 60 s de surveillance supplémentaire. Les deux essais ont
+chacun commencé après 60 s continues d’état `0x00`. Cela représente deux paires
+séparées, pas quatre bandes imprimées d’un seul flux continu. La confirmation
+visuelle du deuxième essai reste à recueillir.
+
+Le scénario à énergie 14500 et délai 28 ms est ensuite lancé, toujours sans pause
+fixe et avec le contrôle de débit actif.
