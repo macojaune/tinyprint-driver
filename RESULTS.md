@@ -78,3 +78,14 @@ suivantes. Marvin confirme environ 4 cm entre les repères 0 et 40 sur A comme B
 sans compression visible. La géométrie est donc correcte sur ces tirages courts,
 y compris la mire dense ; cela ne valide pas un tirage prolongé à cette énergie.
 Le test suivant reprend les deux photos originales à énergie 8000.
+
+## Photos à énergie 8000, délai 14 ms
+
+Les deux photos originales sont envoyées sans pause fixe, contrôle de débit actif.
+3453 lignes, 772736 points noirs, aucun XOFF, aucun `0x04` pendant l’envoi ou les
+60 s supplémentaires d’observation. Code de sortie 0. Marvin confirme une image
+lisible avec des proportions correctes sur les deux bandes.
+
+Ce résultat est meilleur que le tirage trop pâle à 4000 et que le tirage comprimé
+puis arrêté à 14500. Il ne constitue pas un seuil universel. Une répétition identique
+est lancée avant de tester une cadence plus lente à 14500.
