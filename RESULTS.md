@@ -116,7 +116,7 @@ réussite sur une bande ne valide pas encore la série entière de six tickets.
 
 ### Deux premières bandes consécutives via le bridge livré
 
-Après livraison du nouveau défaut web à 6000, les deux premiers bitmaps d’origine
+Après livraison de la nouvelle énergie par défaut à 6000, les deux premiers bitmaps d’origine
 sont préparés et envoyés via l’API du serveur local. Le paramètre d’énergie est
 volontairement omis ; le manifeste reçoit bien 6000 / 14 ms, sans pause interne
 ni entre les tickets. Les PNG préparés sont vérifiés identiques, pixel pour pixel,

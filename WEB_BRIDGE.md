@@ -177,7 +177,7 @@ Le parcours navigateur a été vérifié sur image synthétique : sélection et 
 aperçu automatique, changement de préréglage, 21 tickets, largeur de 20 cm, ZIP et
 restauration par URL, sur bureau et à 390 px. Le ZIP a été relu pour vérifier ses
 dimensions et la marge blanche. L’envoi réel par l’API web a ensuite été contrôlé
-sur les deux premières bandes de la photo sombre : défaut d’énergie à 6000, délai
+sur les deux premières bandes de la photo sombre : énergie par défaut à 6000, délai
 14 ms, aucune pause, bitmaps identiques aux originaux. Le propriétaire confirme
 les deux bandes lisibles, longues de 28,8 cm et sans écrasement ; les 60 secondes
 de surveillance finale restent sans défaut. Voir `RESULTS.md` pour les mires et
