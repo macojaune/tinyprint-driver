@@ -36,3 +36,17 @@ https://github.com/sajjad-amin/TinyPOS-Bridge
 Aucune licence racine n’a été trouvée dans le checkout de cette référence lors
 de l’initialisation. L’audit de provenance, l’attribution et le choix de licence
 restent à terminer avant de publier ce dépôt. Aucune publication GitHub à ce stade.
+
+## Paramètres indépendants
+
+`--energy` remplace seulement la valeur AF, et `--row-delay` seulement le délai
+entre lignes en secondes. Le seuil de rendu reste celui de `--strength`.
+
+```sh
+python tinyprint_cli.py image image.png --energy 8000 --row-delay 0.014 --chunk-rows 0 --address UUID
+```
+
+Ce sont des paramètres expérimentaux, pas encore un profil de qualité validé.
+Le contrôle de débit `AE 10`/`AE 00` reste actif même si `--chunk-rows 0` désactive
+les pauses fixes. Une fin d'envoi et un état `0x00` ne prouvent pas la bonne géométrie
+sur papier ; le bilan matériel est dans `RESULTS.md`.

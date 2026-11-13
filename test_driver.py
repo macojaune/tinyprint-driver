@@ -17,6 +17,7 @@ class FakePrinter:
         self.rows = 0
         self.blocked = False
         self.fault = fault
+        self.energies = []
 
     async def start_notify(self, characteristic, callback):
         self.callback = callback
@@ -29,6 +30,8 @@ class FakePrinter:
         self.notify(0xAE, b"\0")
 
     async def write_gatt_char(self, tx, packet, response=False):
+        if packet[2] == 0xAF:
+            self.energies.append(int.from_bytes(packet[6:-2], "little"))
         if packet[2] == 0xA3:
             self.notify(0xA3, bytes([0, 13, 41]))
         if packet[2] == 0xA2:
@@ -49,10 +52,11 @@ class FakePrinter:
 
 
 class DriverTest(unittest.IsolatedAsyncioTestCase):
-    async def print_fake(self, fake):
+    async def print_fake(self, fake, **overrides):
         args = SimpleNamespace(strength=3, feed_rows=0, feed_mm=10, force=False,
                                fault_wait=0, chunk_rows=0, chunk_pause=0,
                                smart_pause=True, smart_window=48)
+        vars(args).update(overrides)
         with patch.object(driver, "connect", AsyncMock(return_value=(fake, "tx"))):
             return await driver.print_image(args, Image.new("1", (384, 4), 255))
 
@@ -67,3 +71,8 @@ class DriverTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.print_fake(fake), 3)
         self.assertEqual(fake.rows, 1)
         self.assertFalse(fake.is_connected)
+
+    async def test_energy_can_be_overridden_without_changing_strength(self):
+        fake = FakePrinter()
+        self.assertEqual(await self.print_fake(fake, energy=8000, row_delay=0), 0)
+        self.assertEqual(fake.energies, [8000])

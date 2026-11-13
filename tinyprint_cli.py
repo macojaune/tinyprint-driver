@@ -483,6 +483,10 @@ async def cmd_status(args):
 
 async def print_image(args, img):
     energy, delay, thr = STRENGTH[max(1, min(7, args.strength))]
+    if getattr(args, "energy", None) is not None:
+        energy = args.energy
+    if getattr(args, "row_delay", None) is not None:
+        delay = args.row_delay
     rows = rows_from_image(img, thr)
     feed_rows = args.feed_rows if args.feed_rows else max(1, round(args.feed_mm * 8))
     client, tx = await connect(args)
@@ -553,6 +557,10 @@ def save_state(outdir, state):
 async def print_series(args, strips, outdir, start=1):
     """One job per strip, with a cooling pause between strips. Resumable."""
     energy, delay, thr = STRENGTH[max(1, min(7, args.strength))]
+    if getattr(args, "energy", None) is not None:
+        energy = args.energy
+    if getattr(args, "row_delay", None) is not None:
+        delay = args.row_delay
     feed_rows = args.feed_rows if args.feed_rows else max(1, round(args.feed_mm * 8))
     rows_list = [(i, rows_from_image(s, thr)) for i, s in enumerate(strips, 1)]
     state = load_state(outdir) if args.resume else {"done": [], "failed": None}
@@ -648,6 +656,8 @@ def main():
     ap.add_argument("value", nargs="?")
     ap.add_argument("--address")
     ap.add_argument("--strength", type=int, default=3)
+    ap.add_argument("--energy", type=int, help="Override AF energy independently of strength")
+    ap.add_argument("--row-delay", type=float, help="Override delay between raster rows, in seconds")
     ap.add_argument("--dither", default=None, choices=["floyd", "atkinson", "bayer", "none"])
     ap.add_argument("--gain", type=float, default=1.0)
     ap.add_argument("--preview")
@@ -677,6 +687,10 @@ def main():
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--timeout", type=float, default=12.0)
     a = ap.parse_args()
+    if a.energy is not None and not 1 <= a.energy <= 65535:
+        ap.error("energy must fit a positive uint16")
+    if a.row_delay is not None and (not math.isfinite(a.row_delay) or a.row_delay < 0):
+        ap.error("row-delay must be finite and non-negative")
     if a.chunk_rows < 0 or a.smart_window < 0 or a.chunk_pause < 0:
         ap.error("chunk-rows, smart-window and chunk-pause must be non-negative")
 
