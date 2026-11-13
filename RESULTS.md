@@ -34,19 +34,37 @@ Le test de faible énergie est relancé après cette confirmation.
 Énergie 4000, délai 14 ms, aucune pause fixe, deux bandes identiques. Résultat :
 3453 lignes envoyées, aucun `0x04`, aucune demande XOFF, aucun temps d’attente de
 flux. État final `00 0d 29` après 60 s supplémentaires d’observation, code de sortie 0.
-Marvin confirme deux bandes complètes et régulières d’environ 21,6 cm chacune.
-Il s’agit d’une réussite matériellement confirmée, pas encore d’une garantie de
-répétabilité ni d’un seuil d’énergie optimal.
+Marvin confirme d’abord deux bandes complètes et régulières d’environ 21,6 cm,
+puis précise que l’image est trop pâle pour contrôler sa géométrie. La longueur
+semble correcte approximativement ; l’absence de compression dans l’image n’est
+pas prouvée. Le résultat établit l’absence de `0x04` sur cet essai, sans valider une
+qualité d’image exploitable, la répétabilité ou un seuil optimal.
 
 ## Énergie 14500, même cadence, contrôle de débit actif
 
 Même entrée, délai 14 ms, sans pause fixe. XOFF à 1694 lignes envoyées, attente de
 8,534 s jusqu’à XON, puis reprise. Premier `0x04` à 2539 lignes envoyées, soit 811
 lignes envoyées dans la deuxième trame, 49,093 s après le début du premier job.
-Marvin confirme une avance régulière du papier jusqu’au voyant rouge.
+Marvin indique d’abord une avance régulière jusqu’au voyant rouge, puis corrige
+ce constat après examen de l’image : le tirage a aussi des défauts d’avance.
+L’arrêt `0x04` est confirmé, mais l’intégrité du déplacement papier ne l’est pas.
 
-Le défaut est donc reproduit malgré le respect du contrôle de débit, sans patinage
-rapporté cette fois. Le défaut du transport et la mise en défaut énergétique ne
+Le défaut est reproduit malgré le respect du contrôle de débit, avec des défauts
+d’avance constatés sur le tirage. Le défaut du transport et la mise en défaut énergétique ne
 sont pas équivalents. La comparaison 4000/14500 à pixels et délai constants renforce
 une dépendance à la charge énergétique ; elle ne mesure ni température ni courant
 et n’identifie pas à elle seule le composant responsable.
+
+Le scénario `slow-cadence` a été annulé pendant le repos, avant toute impression,
+à la suite de cette correction. Les comparaisons de cadence restent à faire.
+
+## Passage aux mires de mesure
+
+L’image à 14500 est décrite comme réduite à environ la moitié de la taille attendue.
+La faible visibilité du tirage 4000 empêche une comparaison précise des détails.
+`calibration.py` produit donc deux mires de 400 lignes : A peu chargée, B dense.
+Chaque mire a cinq repères numérotés 0, 10, 20, 30, 40, espacés de 80 lignes.
+La distance du repère 0 au repère 40 devrait être 40 mm à 8 points/mm.
+Ce sont des repères pour mesure humaine, pas une mesure intégrée au matériel.
+Les essais prévus gardent le même délai de 14 ms et le contrôle de débit actif,
+à énergie 14500 puis 8000 pour une comparaison plus lisible que 4000.

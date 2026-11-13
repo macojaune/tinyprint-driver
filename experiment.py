@@ -17,6 +17,8 @@ SCENARIOS = {
     "low-energy": {"energy": 4000, "delay": .014, "pause_seconds": 0},
     "baseline": {"energy": 14500, "delay": .014, "pause_seconds": 0},
     "slow-cadence": {"energy": 14500, "delay": .028, "pause_seconds": 0},
+    "calibration-high": {"energy": 14500, "delay": .014, "pause_seconds": 0},
+    "calibration-mid": {"energy": 8000, "delay": .014, "pause_seconds": 0},
 }
 
 
