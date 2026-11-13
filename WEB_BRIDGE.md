@@ -176,7 +176,11 @@ est simulé : ces tests n’impriment pas et ne prouvent pas l’avance physique
 Le parcours navigateur a été vérifié sur image synthétique : sélection et collage,
 aperçu automatique, changement de préréglage, 21 tickets, largeur de 20 cm, ZIP et
 restauration par URL, sur bureau et à 390 px. Le ZIP a été relu pour vérifier ses
-dimensions et la marge blanche. L’impression web réelle reste à valider avec le
-propriétaire et le papier prêt. Le profil 6000/14 ms vient des mires denses décrites
-dans `RESULTS.md`. Le précédent profil à 8000 avait passé deux paires de photos,
-mais a échoué sur le nouveau contenu très sombre.
+dimensions et la marge blanche. L’envoi réel par l’API web a ensuite été contrôlé
+sur les deux premières bandes de la photo sombre : énergie par défaut à 6000, délai
+14 ms, aucune pause, bitmaps identiques aux originaux. Le propriétaire confirme
+les deux bandes lisibles, longues de 28,8 cm et sans écrasement ; les 60 secondes
+de surveillance finale restent sans défaut. Voir `RESULTS.md` pour les mires et
+la portée matérielle de ces essais. La série complète de six bandes reste non testée.
+Le précédent profil à 8000 avait passé deux paires de photos, mais a échoué sur
+le nouveau contenu très sombre.

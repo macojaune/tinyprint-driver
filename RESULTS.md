@@ -114,6 +114,22 @@ impressions classiques du bridge. Les paramètres explicites des anciennes séri
 restent conservés ; les profils `--strength` du CLI ne sont pas modifiés. Cette
 réussite sur une bande ne valide pas encore la série entière de six tickets.
 
+### Deux premières bandes consécutives via le bridge livré
+
+Après livraison de la nouvelle énergie par défaut à 6000, les deux premiers bitmaps d’origine
+sont préparés et envoyés via l’API du serveur local. Le paramètre d’énergie est
+volontairement omis ; le manifeste reçoit bien 6000 / 14 ms, sans pause interne
+ni entre les tickets. Les PNG préparés sont vérifiés identiques, pixel pour pixel,
+aux deux fichiers du tirage raté, chacun de 384 × 2304 points.
+
+Le départ suit 60 secondes continues d’état clair. Les deux bandes sont envoyées
+et marquées terminées. Aucun défaut n’est enregistré pendant l’envoi ni les
+60 secondes de surveillance qui suivent, état final `00 0d 28`. Marvin confirme
+**deux bandes d’environ 28,8 cm chacune, lisibles et sans écrasement**, y compris
+sur la deuxième. Le profil 6000 / 14 ms est donc validé pour cette paire sur ce
+papier et cet exemplaire, en plus de la mire dense et de la première bande isolée.
+L’impression de la série complète de six bandes reste distincte et non testée.
+
 ## Incident papier à exclure des mesures de limite
 
 Papier rose, imprimante branchée en USB selon Marvin. Un premier essai a rencontré

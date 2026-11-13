@@ -166,6 +166,9 @@ papier rose, une mire sombre de 28,8 cm garde ses graduations régulières et
 lisibles à cette énergie, sans défaut durant l’envoi ni les 60 secondes suivantes.
 La première bande de la photo sombre, réimprimée avec les mêmes pixels à 6000,
 est également confirmée lisible, longue de 28,8 cm et sans écrasement.
+Les deux premières bandes de cette photo ont ensuite été envoyées consécutivement
+par l’API web, sans pauses, et confirmées correctes sur papier avec 60 secondes
+de surveillance finale sans défaut. La série entière de six bandes reste non testée.
 La même mire à 8000 était fortement comprimée, même avec des pauses internes.
 Ce profil reste propre au matériel et au papier testés ; il ne garantit pas les
 autres contenus ou séries prolongées.
