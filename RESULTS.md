@@ -68,3 +68,13 @@ La distance du repère 0 au repère 40 devrait être 40 mm à 8 points/mm.
 Ce sont des repères pour mesure humaine, pas une mesure intégrée au matériel.
 Les essais prévus gardent le même délai de 14 ms et le contrôle de débit actif,
 à énergie 14500 puis 8000 pour une comparaison plus lisible que 4000.
+
+## Mires courtes à 14500
+
+Mire A : 400 lignes, 6955 points noirs. Mire B : 400 lignes, 91999 points noirs.
+Deux jobs consécutifs, énergie 14500, délai 14 ms, aucune pause fixe et aucune
+demande XOFF. 800 lignes envoyées, aucun défaut en fin de jobs ni pendant les 60 s
+suivantes. Marvin confirme environ 4 cm entre les repères 0 et 40 sur A comme B,
+sans compression visible. La géométrie est donc correcte sur ces tirages courts,
+y compris la mire dense ; cela ne valide pas un tirage prolongé à cette énergie.
+Le test suivant reprend les deux photos originales à énergie 8000.
