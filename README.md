@@ -8,8 +8,7 @@ Le projet contient un codec de protocole indépendant, une session Bluetooth Low
 Energy avec contrôle de débit, un CLI et un banc d’essais matériels. Il s’agit d’un
 prototype testé sur **un exemplaire X5 sous macOS**, pas d’un pilote universel.
 Le dépôt est [public sur GitHub](https://github.com/macojaune/tinyprint-driver),
-avec le développement sur `develop`. La licence de redistribution et l’audit
-de provenance restent à finaliser.
+avec le développement sur `develop`. Il est distribué sous [licence MIT](LICENSE).
 
 ## L’imprimante de référence
 
@@ -254,10 +253,10 @@ Références consultées : [TinyPOS-Bridge](https://github.com/sajjad-amin/TinyP
 [PythonCatPrinter](https://github.com/WerWolv/PythonCatPrinter),
 [Cat-Printer](https://github.com/NaitLee/Cat-Printer).
 Le travail local a d’abord été développé à côté du clone TinyPOS-Bridge, puis
-isolé dans ce dépôt Git. Aucune licence racine n’a été trouvée dans ce checkout
-lors de son examen. L’attribution, la provenance du code et la licence de ce projet
-restent à finaliser. Le code est consultable publiquement ; les conditions de
-réutilisation doivent encore être précisées par une licence explicite.
+isolé dans ce dépôt Git.
+
+Ce projet est distribué sous [licence MIT](LICENSE), copyright 2026 macojaune.
+Les références ci-dessus documentent les travaux et sources de protocole consultés.
 
 Les dossiers `private/`, `runs/` et `.venv/`, ainsi que les fichiers d’environnement,
 sont ignorés. Les manifestes générés peuvent contenir un chemin absolu de source :
