@@ -91,6 +91,13 @@ ZIP donnent le raster réellement envoyé, sans guides bleus de découpe.
 
 L’énergie, le délai par ligne et la pause entre tickets sont séparés, dans les
 réglages d’impression repliés. Ils démarrent à **8000 / 14 ms / aucune pause fixe**.
+Deux champs permettent aussi de tester une pause à l’intérieur d’un ticket : le
+nombre de lignes entre pauses et leur durée. Le nombre de lignes démarre à **0**,
+donc ces pauses restent désactivées par défaut. Par exemple, 400 lignes / 6 secondes
+interrompt l’envoi tous les 5 cm théoriques, sans refermer la trame. L’atelier utilise
+des intervalles fixes ; l’option CLI de recherche d’une ligne claire reste distincte.
+Les arrêts peuvent laisser des traits et leur efficacité doit être vérifiée sur
+papier. Les valeurs sont conservées dans le manifeste et lors de la restauration.
 Changer l’énergie ne modifie pas l’aperçu : son effet dépend du papier et du matériel,
 et n’est pas simulé. Les essais à 13000 et 14500 ont rencontré des défauts sur notre
 exemplaire. Un tirage très sombre a également déclenché `0x04` à 8000 : ce réglage
@@ -136,7 +143,8 @@ les nouvelles routes. Les API classiques restent celles du clone.
 Les deux routes POST acceptent un multipart : `file`, `direction` (vertical/horizontal),
 `size_mode` (count/width/height), `count`, `size_mm` (pour width/height), `preset`,
 `dither`, `sharpness`, `contrast`, `brightness`, `gain`, `strength`, `autocrop`,
-`energy`, `row_delay`, `cooldown`. `gain` désigne le gamma et `strength` la compensation
+`energy`, `row_delay`, `cooldown`, `chunk_rows`, `chunk_pause`. `chunk_rows=0` désactive
+les pauses internes ; `chunk_pause` vaut 6 secondes par défaut. `gain` désigne le gamma et `strength` la compensation
 logicielle, indépendante de l’énergie. Un préréglage fournit les valeurs omises de
 netteté, contraste, luminosité et tramage ; les valeurs explicites les remplacent.
 

@@ -41,9 +41,13 @@ et aucune pause. L’état initial est clair. Les 2304 lignes sont envoyées, pu
 contrôle A3 final reçoit `0x04`, environ 37,5 s après la demande d’impression. La
 bande reste non terminée dans l’état de reprise. Ce scénario reproduit donc le
 défaut sur une seule longue bande sombre, sans le rendu Atkinson de la photo.
-La mesure des graduations de cette mire est encore attendue. Le mécanisme physique
-exact reste inconnu : cette expérience ne mesure ni chauffe, ni tension, ni courant,
-ni quantité de données réellement exécutée par le firmware.
+Marvin voit le repère 0 puis 20 à la bonne distance, mais les repères suivants se
+tassent, et le repère final 280 est présent à une mauvaise distance. Sa photo montre
+la mire claire longue et régulière, suivie de la mire sombre fortement comprimée.
+Il ne s’agit donc pas seulement d’une coupure avant la fin du contenu. L’avance
+effective devient insuffisante sous cette charge ; la mesure de la longueur totale
+et la distinction entre mécanisme d’entraînement, alimentation et exécution firmware
+restent ouvertes. Cette expérience ne mesure ni chauffe, ni tension, ni courant.
 
 ## Incident papier à exclure des mesures de limite
 

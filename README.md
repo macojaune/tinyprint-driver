@@ -167,6 +167,12 @@ confirmées lisibles, de bonne taille et sans défaut d’avance par le proprié
 Chaque essai commençait après 60 s d’état clair et était surveillé 60 s après
 l’envoi. Quatre bandes d’un seul flux et les autres papiers ne sont pas validés.
 
+Un essai web ultérieur à 8000 / 14 ms a toutefois rencontré `0x04` sur une photo
+très sombre. Une mire de 28,8 cm chargée à environ 90 % a reproduit le défaut et
+une forte compression de l’avance, tandis que la mire claire de même longueur
+est sortie aux bonnes dimensions. Le profil ci-dessus est donc validé uniquement
+pour les photos des deux essais réussis, pas pour tous les contenus.
+
 À 4000, le tirage est trop pâle pour valider précisément la géométrie. À 14500,
 `0x04` apparaît même avec le délai doublé à 28 ms. À 13000 / 14 ms, le nouveau
 contrôle échoue également sur `0x04`. Les compteurs détaillés, observations papier

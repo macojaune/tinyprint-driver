@@ -162,6 +162,23 @@ class ApiTest(unittest.TestCase):
             previews.append(response.json()['preview'])
         self.assertEqual(*previews)
 
+    def test_chunk_pause_controls_reach_the_shared_driver_and_survive_reload(self):
+        self.login()
+        response=self.client.post('/api/internal/bands/prepare',files={'file':('test.png',self.photo())},
+                                  data={'count':2,'chunk_rows':400,'chunk_pause':6})
+        self.assertEqual(response.status_code,200,response.text)
+        series=response.json()
+        self.assertEqual(series['settings']['chunk_rows'],400)
+        self.assertEqual(series['settings']['chunk_pause'],6)
+        args=self.app.state.bands.args(series['settings'])
+        self.assertEqual(args.chunk_rows,400)
+        self.assertEqual(args.chunk_pause,6)
+        self.assertFalse(args.smart_pause)
+        old=self.app.state.bands.args({'energy':8000,'row_delay':.014,'cooldown':0})
+        self.assertEqual(old.chunk_rows,0)
+        self.assertEqual(old.chunk_pause,6)
+        self.assertEqual(self.client.get('/api/internal/bands/'+series['id']).json()['settings']['chunk_rows'],400)
+
     def test_print_calls_shared_driver_and_persists_progress(self):
         from web_bridge import driver
         self.login()

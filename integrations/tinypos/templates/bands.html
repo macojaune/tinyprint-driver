@@ -30,6 +30,8 @@
 <div class="field"><label for="energy" class="form-label">Énergie thermique</label><input id="energy" name="energy" type="number" min="1" max="65535" value="8000" required class="form-control"><div class="form-text">8000 a passé deux essais sur les mêmes photos, mais a aussi déclenché un défaut sur une photo très sombre. Ce réglage agit sur la tête ; l’aperçu ne simule ni la chauffe ni l’avance réelle du papier.</div></div>
 <div class="field"><label for="row_delay" class="form-label">Délai entre lignes, en secondes</label><input id="row_delay" name="row_delay" type="number" min="0.001" max="0.2" step="0.001" value="0.014" required class="form-control"></div>
 <div class="field"><label for="cooldown" class="form-label">Pause entre tickets, en secondes</label><input id="cooldown" name="cooldown" type="number" min="0" max="120" value="0" required class="form-control"></div>
+<div class="field"><label for="chunk_rows" class="form-label">Lignes entre pauses dans un ticket</label><input id="chunk_rows" name="chunk_rows" type="number" min="0" max="12000" step="1" value="0" required class="form-control"><div class="form-text">0 désactive ces pauses. 400 lignes correspondent à 5 cm théoriques. Des traits d’arrêt peuvent apparaître sur l’image.</div></div>
+<div class="field"><label for="chunk_pause" class="form-label">Durée de ces pauses, en secondes</label><input id="chunk_pause" name="chunk_pause" type="number" min="0" max="120" step="0.1" value="6" required class="form-control"><div class="form-text">Réglage expérimental pour les contenus chargés. Une pause entre tickets ne remplace pas une pause à l’intérieur d’un ticket long.</div></div>
 </details>
 </form>
 <section class="preview-panel" aria-label="Aperçu et impression">
@@ -168,7 +170,7 @@
         }
         sizeFields();
         buttons();
-        if (['energy', 'row_delay', 'cooldown'].includes(event?.target.id) && preview && previewRevision === oldRevision && form.checkValidity()) {
+        if (['energy', 'row_delay', 'cooldown', 'chunk_rows', 'chunk_pause'].includes(event?.target.id) && preview && previewRevision === oldRevision && form.checkValidity()) {
             previewRevision = revision;
             buttons();
             message('Réglage de l’imprimante modifié. L’aperçu ne simule pas l’énergie thermique ni le mouvement du papier.');
@@ -300,7 +302,8 @@
             const defaults = { preset: 'custom', dither: 'floyd', gain: 1, sharpness: 0, contrast: 1, brightness: 1, strength: 7 };
             Object.entries({ ...defaults, ...data.render }).forEach(([key, value]) => { if ($(key) && key !== 'autocrop') $(key).value = value; });
             $('autocrop').checked = data.render.autocrop || false;
-            ['energy', 'row_delay', 'cooldown'].forEach(key => $(key).value = data.settings[key]);
+            const printerDefaults = { energy: 8000, row_delay: 0.014, cooldown: 0, chunk_rows: 0, chunk_pause: 6 };
+            Object.entries(printerDefaults).forEach(([key, fallback]) => $(key).value = data.settings[key] ?? fallback);
             preparedRevision = revision;
             preview = { ...data, preview: `/api/internal/bands/${data.id}/preview` };
             previewRevision = revision;
