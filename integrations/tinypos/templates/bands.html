@@ -27,7 +27,7 @@
 <div class="field"><label for="strength" class="form-label">Force de rendu / noirceur</label><select id="strength" name="strength" class="form-select"><option value="1">1 · compensation claire</option><option value="2">2 · clair</option><option value="3">3 · modéré</option><option value="4">4 · normal</option><option value="5">5 · sombre</option><option value="6">6 · très sombre</option><option value="7" selected>7 · sans compensation claire</option></select><div class="form-text">Compensation logicielle du studio. Elle ne change pas l’énergie thermique choisie ci-dessous.</div></div>
 <div class="form-check mb-4"><input id="autocrop" name="autocrop" type="checkbox" class="form-check-input"><label for="autocrop" class="form-check-label">Recadrer les marges blanches de la source</label></div>
 <details><summary>Réglages de l’imprimante</summary>
-<div class="field"><label for="energy" class="form-label">Énergie thermique</label><input id="energy" name="energy" type="number" min="1" max="65535" value="8000" required class="form-control"><div class="form-text">8000 a passé deux essais sur les mêmes photos, mais a aussi déclenché un défaut sur une photo très sombre. Ce réglage agit sur la tête ; l’aperçu ne simule ni la chauffe ni l’avance réelle du papier.</div></div>
+<div class="field"><label for="energy" class="form-label">Énergie thermique</label><input id="energy" name="energy" type="number" min="1" max="65535" value="{{ default_energy }}" required class="form-control"><div class="form-text">6000 est le profil retenu sur notre X5 après contrôle des tirages sombres. 8000 a provoqué des défauts d’avance et un arrêt. L’aperçu ne simule ni la chauffe ni l’avance réelle du papier.</div></div>
 <div class="field"><label for="row_delay" class="form-label">Délai entre lignes, en secondes</label><input id="row_delay" name="row_delay" type="number" min="0.001" max="0.2" step="0.001" value="0.014" required class="form-control"></div>
 <div class="field"><label for="cooldown" class="form-label">Pause entre tickets, en secondes</label><input id="cooldown" name="cooldown" type="number" min="0" max="120" value="0" required class="form-control"></div>
 <div class="field"><label for="chunk_rows" class="form-label">Lignes entre pauses dans un ticket</label><input id="chunk_rows" name="chunk_rows" type="number" min="0" max="12000" step="1" value="0" required class="form-control"><div class="form-text">0 désactive ces pauses. 400 lignes correspondent à 5 cm théoriques. Des traits d’arrêt peuvent apparaître sur l’image.</div></div>
@@ -302,7 +302,7 @@
             const defaults = { preset: 'custom', dither: 'floyd', gain: 1, sharpness: 0, contrast: 1, brightness: 1, strength: 7 };
             Object.entries({ ...defaults, ...data.render }).forEach(([key, value]) => { if ($(key) && key !== 'autocrop') $(key).value = value; });
             $('autocrop').checked = data.render.autocrop || false;
-            const printerDefaults = { energy: 8000, row_delay: 0.014, cooldown: 0, chunk_rows: 0, chunk_pause: 6 };
+            const printerDefaults = { energy: {{ default_energy }}, row_delay: 0.014, cooldown: 0, chunk_rows: 0, chunk_pause: 6 };
             Object.entries(printerDefaults).forEach(([key, fallback]) => $(key).value = data.settings[key] ?? fallback);
             preparedRevision = revision;
             preview = { ...data, preview: `/api/internal/bands/${data.id}/preview` };

@@ -96,8 +96,23 @@ ces mécanismes ne sont pas mesurés.
 La mire sombre complète de 2304 lignes est ensuite envoyée à 6000 avec les mêmes
 paramètres, après 60 secondes continues d’état clair. L’envoi et les 60 secondes
 de surveillance suivantes se terminent sans défaut, état final `00 0c 29`. La
-mesure physique des repères 0–280 mm est encore attendue. La géométrie de cette
-mire longue et le rendu sur la photo ne sont donc pas encore validés.
+mesure physique est confirmée par Marvin : **28 cm réguliers et lisibles entre
+les repères 0 et 280 mm**. Cette mire dense longue valide donc sa géométrie sur
+ce papier à 6000. Le rendu sur la photo est contrôlé séparément.
+
+### Première bande de la photo à 6000
+
+Le premier PNG du tirage raté est réutilisé sans changement de pixels : 384 × 2304
+points, 785398 points noirs. À énergie 6000, délai 14 ms, mode hérité et sans pause,
+après 60 secondes continues d’état clair, l’envoi et les 60 secondes de surveillance
+se terminent sans défaut. L’état final est `00 0d 29`. Marvin confirme **28,8 cm,
+image lisible et sans écrasement**.
+
+Le bridge retient donc 6000 / 14 ms sans pauses fixes comme nouveau profil de départ
+pour cet exemplaire et ce papier. La valeur est partagée entre l’atelier et les
+impressions classiques du bridge. Les paramètres explicites des anciennes séries
+restent conservés ; les profils `--strength` du CLI ne sont pas modifiés. Cette
+réussite sur une bande ne valide pas encore la série entière de six tickets.
 
 ## Incident papier à exclure des mesures de limite
 

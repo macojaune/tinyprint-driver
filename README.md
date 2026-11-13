@@ -115,8 +115,8 @@ python tinyprint_cli.py image mon-image.jpg --dither floyd --gain 1.2 --preview 
 Exemples de tirages réels, une fois le papier prêt :
 
 ```sh
-python tinyprint_cli.py text "Bonjour" --energy 8000 --row-delay 0.014 --chunk-rows 0 --address ADRESSE_DU_SCAN
-python tinyprint_cli.py image mon-image.jpg --dither floyd --energy 8000 --row-delay 0.014 --chunk-rows 0 --address ADRESSE_DU_SCAN
+python tinyprint_cli.py text "Bonjour" --energy 6000 --row-delay 0.014 --chunk-rows 0 --address ADRESSE_DU_SCAN
+python tinyprint_cli.py image mon-image.jpg --dither floyd --energy 6000 --row-delay 0.014 --chunk-rows 0 --address ADRESSE_DU_SCAN
 ```
 
 `--dither` propose `none`, `floyd`, `atkinson` et `bayer`. `--gain` agit sur le
@@ -147,10 +147,10 @@ soit environ 336 mm. Ce n’est pas encore une mise à l’échelle physique exa
 `--gap` concerne la planche d’assemblage ; l’avance papier réelle est réglée par
 `--feed-mm` ou `--feed-rows`.
 
-Pour envoyer une série préparée avec les paramètres des essais à 8000 :
+Pour envoyer une série préparée avec le profil de départ du bridge web :
 
 ```sh
-python tinyprint_cli.py tile-send private/bandes/manifest.json --energy 8000 --row-delay 0.014 --chunk-rows 0 --cooldown 0 --feed-rows 80 --address ADRESSE_DU_SCAN
+python tinyprint_cli.py tile-send private/bandes/manifest.json --energy 6000 --row-delay 0.014 --chunk-rows 0 --cooldown 0 --feed-rows 80 --address ADRESSE_DU_SCAN
 ```
 
 Ajouter `--resume` pour reprendre les bandes non terminées selon `state.json`.
@@ -159,7 +159,21 @@ physiquement raté malgré un état clair, vérifier son avancement avant de rep
 Le script généré et les métadonnées du manifeste ne doivent pas être supposés
 rejouer automatiquement tous les overrides : passer les paramètres explicitement.
 
-## Réglage éprouvé et limites matérielles
+## Profil de départ et limites matérielles
+
+Le bridge web démarre à **6000 / 14 ms**, sans pauses fixes. Sur notre X5 et le
+papier rose, une mire sombre de 28,8 cm garde ses graduations régulières et
+lisibles à cette énergie, sans défaut durant l’envoi ni les 60 secondes suivantes.
+La première bande de la photo sombre, réimprimée avec les mêmes pixels à 6000,
+est également confirmée lisible, longue de 28,8 cm et sans écrasement.
+La même mire à 8000 était fortement comprimée, même avec des pauses internes.
+Ce profil reste propre au matériel et au papier testés ; il ne garantit pas les
+autres contenus ou séries prolongées.
+
+Les séries web déjà préparées conservent leurs paramètres explicites. Une ancienne
+série à 8000 ne passe donc pas automatiquement à 6000. Les niveaux `--strength` du
+CLI restent également inchangés : passer les overrides d’énergie et de délai
+explicitement pour reproduire ce profil.
 
 Sur notre X5, avec les deux photos de test et le papier rose : **8000 / 14 ms**,
 sans pauses fixes, a passé **deux essais de deux bandes**. Les deux paires ont été

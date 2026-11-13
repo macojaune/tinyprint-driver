@@ -17,6 +17,8 @@ import tinyprint_cli as driver
 from photo_bands import layout, source_image, resolve_render, preview_image, render_strips
 from PIL import Image, UnidentifiedImageError
 
+DEFAULT_ENERGY = 6000
+
 
 class BridgeRuntime:
     def __init__(self, data_dir, address=None):
@@ -90,7 +92,7 @@ class BridgeRuntime:
         return self.render(*args, **kwargs)
 
     def args(self, settings=None, strength=3, resume=False):
-        settings = dict(dict(energy=8000, row_delay=.014, cooldown=0, chunk_rows=0,
+        settings = dict(dict(energy=DEFAULT_ENERGY, row_delay=.014, cooldown=0, chunk_rows=0,
                              chunk_pause=6), **(settings or {}))
         return SimpleNamespace(address=self.address, timeout=12, strength=strength, **settings,
                                feed_rows=80, feed_mm=10, force=False, fault_wait=0,
@@ -229,12 +231,13 @@ def build_app(tinypos_path, data_dir, address=None):
             raise HTTPException(404, 'Série introuvable.')
     @router.get('/photo-bands')
     async def page(request: Request):
-        return templates.TemplateResponse(request=request, name='bands.html', context={'active_page': 'bands'})
+        return templates.TemplateResponse(request=request, name='bands.html',
+                                          context={'active_page': 'bands', 'default_energy': DEFAULT_ENERGY})
     @router.post('/api/internal/bands/preview')
     @router.post('/api/internal/bands/prepare')
     async def prepare(request: Request, file: UploadFile = File(...), direction: str = Form('vertical'),
                       count: int = Form(3, ge=1), dither: str = Form(None), gain: float = Form(1, ge=.25, le=4),
-                      energy: int = Form(8000, ge=1, le=65535), row_delay: float = Form(.014, ge=.001, le=.2),
+                      energy: int = Form(DEFAULT_ENERGY, ge=1, le=65535), row_delay: float = Form(.014, ge=.001, le=.2),
                       cooldown: float = Form(0, ge=0, le=120), size_mode: str = Form('count'), size_mm: float = Form(None),
                       preset: str = Form('custom'), sharpness: float = Form(None, ge=0, le=3),
                       contrast: float = Form(None, ge=.25, le=3), brightness: float = Form(None, ge=.25, le=3),
