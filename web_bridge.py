@@ -1,5 +1,6 @@
 """Optional local TinyPOS extension. Start with --tinypos-path; no BLE at startup."""
 import argparse
+import base64
 import asyncio
 import io
 import json
@@ -13,6 +14,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import tinyprint_cli as driver
+from photo_bands import layout, source_image, resolve_render, preview_image, render_strips
 from PIL import Image, UnidentifiedImageError
 
 
@@ -22,6 +24,7 @@ class BridgeRuntime:
         self.root.mkdir(parents=True, exist_ok=True)
         self.address = address
         self.lock = asyncio.Lock()
+        self.render_lock = asyncio.Lock()
         self.active = None
         self.tasks = {}
         self.session = secrets.token_urlsafe(32)
@@ -46,41 +49,43 @@ class BridgeRuntime:
             status = {'status': 'interrupted', 'message': 'Service redémarré ; reprise disponible.'}
         return dict(id=identifier, count=len(manifest['order']), size_mm=manifest['final_size_mm'],
                     bands=manifest['bands'], settings=manifest['settings'], direction=manifest['direction'], render=manifest.get('render', {'dither':'floyd','gain':1}), done=state.get('done', []),
-                    configured=bool(self.address), **status)
+                    configured=bool(self.address), layout=manifest.get('layout', {}), **status)
 
-    def prepare(self, content, direction, count, dither, gain, energy, row_delay, cooldown):
+    def render(self, content, direction, count, dither, gain, energy, row_delay, cooldown,
+               *, preview=False, size_mode='count', size_mm=None, preset='custom',
+               sharpness=None, contrast=None, brightness=None, strength=7, autocrop=False):
+        options=resolve_render(dict(preset=preset,dither=dither,gain=gain,sharpness=sharpness,
+                                    contrast=contrast,brightness=brightness,strength=strength,autocrop=autocrop))
         with Image.open(io.BytesIO(content)) as source:
-            if source.width * source.height > 20_000_000:
+            if source.width*source.height>20_000_000:
                 raise ValueError('Image trop grande : maximum 20 millions de pixels.')
             source.load()
-            if count > (source.width if direction == 'vertical' else source.height):
-                raise ValueError('Le nombre de bandes dépasse la dimension de l’image.')
-            strips = []
-            for _, image in driver.slice_image(source, direction, count):
-                if direction == 'horizontal':
-                    image = image.rotate(-90, expand=True)
-                image = driver.strip_to_print(image)
-                if image.height > 12000:
-                    raise ValueError('Bandes trop longues : réduisez leur nombre ou changez de sens.')
-                strips.append(driver.dither(image, dither, gain))
-        if sum(image.height for image in strips) > 60000:
-            raise ValueError('La série dépasse 60 000 lignes.')
-        identifier = uuid.uuid4().hex
-        folder = self.root / identifier
+            adjusted=source_image(source,options['autocrop'])
+            plan=layout(adjusted.size,direction,count,size_mode,size_mm)
+            sheet=preview_image(source,plan,options)
+            bands=[dict(number=i,rows=plan['rows_per_ticket'],length_mm=plan['rows_per_ticket']/8)
+                   for i in range(1,plan['count']+1)]
+            settings=dict(energy=energy,row_delay=row_delay,cooldown=cooldown)
+            if preview:
+                buffer=io.BytesIO();sheet.save(buffer,format='PNG')
+                return dict(count=plan['count'],size_mm=plan['size_mm'],bands=bands,layout=plan,
+                            render=options,settings=settings,direction=direction,configured=bool(self.address),
+                            preview='data:image/png;base64,'+base64.b64encode(buffer.getvalue()).decode('ascii'))
+            images=render_strips(source,plan,options)
+        identifier=uuid.uuid4().hex
+        folder=self.root/identifier
         folder.mkdir()
-        for index, image in enumerate(strips, 1):
-            image.save(folder / f'{index:02}.png')
-        preview = [im.rotate(90, expand=True) for im in strips] if direction == 'horizontal' else strips
-        sheet = driver.assemble(preview, direction, gap_rows=22, gap_cols=22).convert('L')
-        sheet.thumbnail((1400, 2200))
-        sheet.save(folder / 'preview.png')
-        size = [count * 48, strips[0].height / 8] if direction == 'vertical' else [strips[0].height / 8, count * 48]
-        settings = dict(energy=energy, row_delay=row_delay, cooldown=cooldown)
-        manifest = dict(direction=direction, render=dict(dither=dither, gain=gain), order=[f'{i:02}.png' for i in range(1, count+1)],
-                        final_size_mm=size, settings=settings,
-                        bands=[dict(number=i, rows=im.height, length_mm=im.height/8) for i, im in enumerate(strips, 1)])
-        (folder / 'manifest.json').write_text(json.dumps(manifest, indent=2))
+        for index,image in enumerate(images,1):
+            image.save(folder/f'{index:02}.png')
+        sheet.save(folder/'preview.png')
+        manifest=dict(direction=direction,render=options,layout=plan,
+                      order=[f'{i:02}.png' for i in range(1,plan['count']+1)],
+                      final_size_mm=plan['size_mm'],settings=settings,bands=bands)
+        (folder/'manifest.json').write_text(json.dumps(manifest,indent=2))
         return self.details(identifier)
+
+    def prepare(self, *args, **kwargs):
+        return self.render(*args, **kwargs)
 
     def args(self, settings=None, strength=3, resume=False):
         settings = settings or dict(energy=8000, row_delay=.014, cooldown=0)
@@ -222,20 +227,25 @@ def build_app(tinypos_path, data_dir, address=None):
     @router.get('/photo-bands')
     async def page(request: Request):
         return templates.TemplateResponse(request=request, name='bands.html', context={'active_page': 'bands'})
+    @router.post('/api/internal/bands/preview')
     @router.post('/api/internal/bands/prepare')
-    async def prepare(file: UploadFile = File(...), direction: str = Form('vertical'), count: int = Form(3, ge=1, le=20),
-                      dither: str = Form('floyd'), gain: float = Form(1, ge=.25, le=4),
+    async def prepare(request: Request, file: UploadFile = File(...), direction: str = Form('vertical'),
+                      count: int = Form(3, ge=1), dither: str = Form(None), gain: float = Form(1, ge=.25, le=4),
                       energy: int = Form(8000, ge=1, le=65535), row_delay: float = Form(.014, ge=.001, le=.2),
-                      cooldown: float = Form(0, ge=0, le=120)):
-        if direction not in ('vertical', 'horizontal') or dither not in ('none','floyd','atkinson','bayer'):
-            raise HTTPException(422, 'Paramètres de rendu invalides.')
-        content = await file.read(20*1024*1024+1)
-        if len(content) > 20*1024*1024:
-            raise HTTPException(413, 'Photo limitée à 20 Mo.')
+                      cooldown: float = Form(0, ge=0, le=120), size_mode: str = Form('count'), size_mm: float = Form(None),
+                      preset: str = Form('custom'), sharpness: float = Form(None, ge=0, le=3),
+                      contrast: float = Form(None, ge=.25, le=3), brightness: float = Form(None, ge=.25, le=3),
+                      strength: int = Form(7, ge=1, le=7), autocrop: bool = Form(False)):
+        content=await file.read(20*1024*1024+1)
+        if len(content)>20*1024*1024:
+            raise HTTPException(413,'Photo limitée à 20 Mo.')
         try:
-            return await asyncio.to_thread(runtime.prepare, content, direction, count, dither, gain, energy, row_delay, cooldown)
-        except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
-            raise HTTPException(422, str(exc) if isinstance(exc, ValueError) else 'Image illisible ou trop grande.')
+            async with runtime.render_lock:
+                return await asyncio.to_thread(runtime.render,content,direction,count,dither,gain,energy,row_delay,cooldown,
+                    preview=request.url.path.endswith('/preview'),size_mode=size_mode,size_mm=size_mm,preset=preset,
+                    sharpness=sharpness,contrast=contrast,brightness=brightness,strength=strength,autocrop=autocrop)
+        except (UnidentifiedImageError,OSError,ValueError,Image.DecompressionBombError) as exc:
+            raise HTTPException(422,str(exc) if isinstance(exc,ValueError) else 'Image illisible ou trop grande.')
     @router.get('/api/internal/bands/{identifier}')
     async def details(identifier: str):
         folder(identifier)
@@ -310,6 +320,10 @@ def build_app(tinypos_path, data_dir, address=None):
             if request.url.path == '/photo-bands':
                 link = link.replace(b'class="nav-link"', b'class="nav-link active" aria-current="page"')
             body = body.replace(marker, marker+link, 1)
+            body = body.replace(
+                b"printerBadge.innerHTML = '<i class=\"bi bi-check-circle-fill me-1\"></i>Bainiu / X6';",
+                b"printerBadge.textContent = data.printer_name || 'Imprimante BLE';")
+            body = body.replace(b'384 Dots (57mm)', b'384 points (48 mm utiles)')
             headers = dict(response.headers)
             headers.pop('content-length', None)
             return Response(body, status_code=response.status_code, headers=headers, media_type='text/html')

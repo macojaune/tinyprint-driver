@@ -34,25 +34,74 @@ ou une autre machine n’est pas activé par cette commande.
 
 ## Utilisation
 
-1. Choisir une photo, le sens d’assemblage et le nombre de tickets.
-2. Choisir le tramage et la luminosité. Les réglages d’impression sont repliés ;
-   ils démarrent à énergie 8000, délai 14 ms et sans pause fixe entre tickets.
-3. Cliquer **Préparer les bandes**. L’aperçu, les dimensions, les longueurs et l’ordre
-   apparaissent. Aucune impression n’a lieu à ce stade.
+1. Choisir, déposer ou coller une photo dans l’atelier. Le collage fonctionne avec
+   une image présente dans le presse-papiers, comme dans l’onglet Test.
+2. Choisir le sens d’assemblage et le dimensionnement : nombre de tickets, largeur
+   finale en cm, ou hauteur finale en cm. Les proportions de la photo sont conservées.
+3. Ajuster le préréglage et les corrections. L’aperçu se recalcule automatiquement
+   après 350 ms sans modification ; les réponses périmées sont écartées. Le bouton
+   Original permet de comparer avec la source. Aucun fichier de bande n’est créé
+   pendant ces changements : seul un petit aperçu est calculé en mémoire.
 4. Télécharger le ZIP, ou cliquer **Imprimer la série** lorsque le papier est prêt.
+   Ces actions préparent les PNG de 384 points et le manifeste sur disque. Une
+   série déjà préparée est réutilisée tant que ses réglages ne changent pas.
 5. En cas d’arrêt, vérifier le papier et l’état puis utiliser **Reprendre les bandes
    restantes**. L’URL contient l’identifiant de la série : la conserver permet de
    retrouver l’aperçu et l’avancement après rechargement ou redémarrage du service.
 
-Modifier un réglage rend l’aperçu précédent périmé et désactive l’impression
-jusqu’à une nouvelle préparation. **Arrêter l’envoi** annule la transmission ;
+Modifier un réglage rend la série précédente périmée et désactive l’impression
+jusqu’à la fin du nouvel aperçu. **Arrêter l’envoi** annule la transmission ;
 les données déjà reçues par l’imprimante peuvent encore produire du papier.
-La largeur utile et les limites de taille restent celles du CLI : environ 48 mm
-par ticket sur l’axe de découpe, pas encore une taille finale physique exacte.
+Après rechargement, une série préparée reste exportable et reprenable. Pour changer
+son rendu, il faut recharger la photo : le fichier source n’est pas conservé.
+
+### Dimensions et longueur des tickets
+
+La largeur utile est de 384 points, soit environ **48 mm à 8 points/mm**. En découpe
+verticale avec N tickets, la largeur finale vaut `48 × N` mm et la longueur de chaque
+ticket vaut `48 × N × hauteur_source / largeur_source` mm. En découpe horizontale,
+la hauteur finale vaut `48 × N` mm et la longueur imprimée de chaque ticket vaut
+`48 × N × largeur_source / hauteur_source` mm ; les bandes sont tournées pour l’envoi.
+
+Une largeur ou hauteur finale saisie est convertie au point le plus proche, soit
+0,125 mm. L’autre dimension suit le ratio de la source, après orientation EXIF et
+recadrage éventuel. Le nombre de tickets est calculé automatiquement. Si le dernier
+ticket n’est pas entièrement occupé, il est complété en blanc : l’interface indique
+la marge à couper. Exemple : une largeur de 20 cm en vertical demande cinq tickets,
+dont le dernier porte 8 mm d’image et 40 mm de blanc.
+
+Les dimensions sont théoriques : l’avance du moteur, le papier et le patinage peuvent
+modifier le résultat physique. L’avance finale de dégagement ajoute aussi du papier
+au-delà de la longueur d’image annoncée. Les agrandissements n’ajoutent pas de détails
+à une petite source ; le facteur d’agrandissement est affiché.
+
+### Réglages photo et réglages matériels
+
+Les préréglages Portrait, Net, Équilibré, Contraste fort et Trame reprennent les valeurs
+de netteté, contraste, luminosité et algorithme du studio TinyPOS. Ils restent
+modifiables individuellement. Sont également disponibles le gamma, le recadrage des
+marges blanches et une force de rendu de 1 à 7. Cette dernière est une compensation
+logicielle de luminosité : 1 éclaircit de 18 %, 7 ne compense pas, avec un pas de 3 %.
+Ces sept niveaux sont distincts ; ils ne commandent pas la tête thermique.
+
+Les quatre algorithmes sont Floyd–Steinberg, Atkinson, Bayer et seuil sans diffusion.
+L’aperçu, limité à 1400 pixels de côté, illustre le rendu et les découpes ; le motif
+de tramage à cette échelle ne reproduit pas chaque point du PNG final. Les PNG du
+ZIP donnent le raster réellement envoyé, sans guides bleus de découpe.
+
+L’énergie, le délai par ligne et la pause entre tickets sont séparés, dans les
+réglages d’impression repliés. Ils démarrent à **8000 / 14 ms / aucune pause fixe**.
+Changer l’énergie ne modifie pas l’aperçu : son effet dépend du papier et du matériel,
+et n’est pas simulé. Les essais à 13000 et 14500 ont rencontré des défauts sur notre
+exemplaire ; voir `RESULTS.md`. Le réglage classique de force TinyPOS garde son
+comportement propre ; la nouvelle échelle de compensation concerne cet atelier.
 
 ## Réutilisation du pilote et des fonctions existantes
 
-- Le rendu utilise `slice_image`, `strip_to_print`, `dither` et `assemble` du CLI.
+- Le rendu web est dans `photo_bands.py` : dimensions exactes, corrections, aperçu
+  réduit et bandes imprimables. Le CLI garde ses options historiques : son `--mm`
+  arrondit toujours au multiple supérieur de 48 mm. Les deux rendus ne sont donc pas
+  interchangeables point par point.
 - L’impression appelle `print_series` et son état `state.json`, avec le même
   `transport.py` et le contrôle de débit AE.
 - Les impressions classiques TinyPOS sont redirigées vers `print_image` du même
@@ -75,15 +124,27 @@ les nouvelles routes. Les API classiques restent celles du clone.
 
 | Méthode et route | Fonction |
 | --- | --- |
-| `POST /api/internal/bands/prepare` | Multipart : `file`, `direction`, `count`, `dither`, `gain`, `energy`, `row_delay`, `cooldown` |
+| `POST /api/internal/bands/preview` | Aperçu en mémoire (data URL PNG), dimensions et paramètres ; ne crée pas de série |
+| `POST /api/internal/bands/prepare` | Prépare et sauvegarde les PNG, l’aperçu et le manifeste ; retourne l’identifiant |
 | `GET /api/internal/bands/{id}` | Paramètres préparés, statut et bandes envoyées |
 | `GET /api/internal/bands/{id}/preview` | Aperçu PNG |
 | `GET /api/internal/bands/{id}/download` | ZIP des bandes, de l’aperçu et du manifeste |
 | `POST /api/internal/bands/{id}/print?resume=false` | Mise en attente de l’envoi ; `resume=true` reprend l’avancement |
 | `POST /api/internal/bands/{id}/cancel` | Annulation de la série active ou en attente |
 
-La préparation accepte au maximum 20 Mo, 20 millions de pixels et 20 bandes.
-Une bande est limitée à 12 000 lignes et la série à 60 000 lignes. Les identifiants
+Les deux routes POST acceptent un multipart : `file`, `direction` (vertical/horizontal),
+`size_mode` (count/width/height), `count`, `size_mm` (pour width/height), `preset`,
+`dither`, `sharpness`, `contrast`, `brightness`, `gain`, `strength`, `autocrop`,
+`energy`, `row_delay`, `cooldown`. `gain` désigne le gamma et `strength` la compensation
+logicielle, indépendante de l’énergie. Un préréglage fournit les valeurs omises de
+netteté, contraste, luminosité et tramage ; les valeurs explicites les remplacent.
+
+La source est limitée à 20 Mo et 20 millions de pixels. La limite arbitraire de
+20 tickets est supprimée. Une bande reste limitée à 12 000 lignes (150 cm) et la
+série à 200 000 lignes, tous tickets réunis. Ces budgets de calcul sont vérifiés
+avant allocation du raster final : ce ne sont pas des capacités physiques validées
+de l’imprimante. Le nombre autorisé dépend donc du format et du ratio de la source.
+Les identifiants
 sont générés côté serveur ; les chemins de fichiers fournis par le client ne sont
 jamais utilisés pour charger un document du Mac.
 
@@ -95,12 +156,14 @@ TINYPOS_PATH=/chemin/TinyPOS-Bridge .venv/bin/python -m unittest -v
 
 Sans `TINYPOS_PATH`, les tests API optionnels sont ignorés ; les tests du runtime
 et du pilote restent disponibles. La suite vérifie notamment les refus d’accès,
-le cookie amont forgé, les entrées invalides, les aperçus, le ZIP, la sérialisation,
+le cookie amont forgé, les entrées invalides, les aperçus sans fichiers, les dimensions
+exactes, les marges blanches verticales et horizontales, les corrections et le ZIP, la sérialisation,
 l’appel du pilote, l’annulation et la reprise après interruption. Le transport
 est simulé : ces tests n’impriment pas et ne prouvent pas l’avance physique.
 
-Le parcours navigateur a été vérifié sur image synthétique : upload, préparation
-verticale et horizontale, aperçu, dimensions, invalidation des réglages et ZIP,
-aux largeurs 1280 px et 390 px. L’impression web réelle reste à valider avec le
+Le parcours navigateur a été vérifié sur image synthétique : sélection et collage,
+aperçu automatique, changement de préréglage, 21 tickets, largeur de 20 cm, ZIP et
+restauration par URL, sur bureau et à 390 px. Le ZIP a été relu pour vérifier ses
+dimensions et la marge blanche. L’impression web réelle reste à valider avec le
 propriétaire et le papier prêt. Le profil 8000/14 ms vient des essais physiques
 antérieurs du CLI décrits dans `RESULTS.md`.

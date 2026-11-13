@@ -243,6 +243,11 @@ sans connexion ni impression.
 Une extension web locale est disponible : voir [WEB_BRIDGE.md](WEB_BRIDGE.md).
 Elle ajoute l’atelier photo à l’interface du clone TinyPOS-Bridge, qui reste un projet
 séparé. Son code et ses accès locaux ne sont pas recopiés dans ce dépôt.
+L’atelier propose un aperçu automatique en mémoire, le collage et le dépôt de photos,
+des préréglages de rendu et une largeur ou hauteur finale en cm, avec une marge
+blanche à couper sur le dernier ticket si nécessaire. Le plafond de 20 tickets est
+remplacé par un budget de calcul dépendant du format. Ces dimensions exactes sont
+propres à l’atelier web ; le `--mm` du CLI conserve l’arrondi décrit plus haut.
 Les fonctions spécifiques d’assemblage sont encore dans le CLI ; leur séparation
 complète du pilote générique reste une étape de préparation à la publication.
 

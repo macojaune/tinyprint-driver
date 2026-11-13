@@ -90,6 +90,8 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(page.status_code,200)
             self.assertIn('Atelier photo en bandes',page.text)
             self.assertIn('navbar',page.text)
+            self.assertNotIn('Bainiu / X6',page.text)
+            self.assertIn("data.printer_name || 'Imprimante BLE'",page.text)
 
     def test_reject_bad_image_invalid_params_and_cross_origin(self):
         self.login()
@@ -122,6 +124,43 @@ class ApiTest(unittest.TestCase):
             self.assertEqual(self.client.post(prefix+'/cancel').status_code,200)
             self.assertEqual(self.client.get(prefix).json()['status'],'cancelled')
             self.assertNotIn(series['id'],self.app.state.bands.tasks)
+
+    def test_live_preview_writes_no_files_and_never_builds_printable_strips(self):
+        self.login()
+        before=set(Path(self.directory.name).iterdir())
+        with patch('web_bridge.driver.connect',side_effect=AssertionError('Unexpected BLE')), patch('web_bridge.render_strips',side_effect=AssertionError('Preview built full strips')):
+            response=self.client.post('/api/internal/bands/preview',files={'file':('test.png',self.photo())},data={'count':21})
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['count'],21)
+        self.assertTrue(response.json()['preview'].startswith('data:image/png;base64,'))
+        self.assertEqual(set(Path(self.directory.name).iterdir()),before)
+
+    def test_exact_dimensions_are_exported_and_all_photo_parameters_persist(self):
+        self.login()
+        response=self.client.post('/api/internal/bands/prepare',files={'file':('test.png',self.photo())},data={
+            'size_mode':'width','size_mm':200,'preset':'portrait','sharpness':2,'contrast':1.4,'brightness':1.2,'strength':3})
+        self.assertEqual(response.status_code,200,response.text)
+        data=response.json()
+        self.assertEqual(data['size_mm'],[200,125])
+        self.assertEqual(data['count'],5)
+        self.assertEqual(data['layout']['trim_mm'],40)
+        self.assertEqual(data['render']['sharpness'],2)
+        self.assertEqual(data['render']['contrast'],1.4)
+        self.assertEqual(data['settings']['energy'],8000)
+        self.assertTrue((self.app.state.bands.folder(data['id'])/'05.png').exists())
+
+    def test_thermal_settings_do_not_simulate_a_different_image(self):
+        self.login()
+        data=io.BytesIO()
+        Image.linear_gradient('L').resize((256,160)).save(data,format='PNG')
+        previews=[]
+        for energy in (4000,13000):
+            response=self.client.post('/api/internal/bands/preview',files={'file':('test.png',data.getvalue())},
+                                      data={'energy':energy,'count':2})
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertEqual(response.json()['settings']['energy'],energy)
+            previews.append(response.json()['preview'])
+        self.assertEqual(*previews)
 
     def test_print_calls_shared_driver_and_persists_progress(self):
         from web_bridge import driver
